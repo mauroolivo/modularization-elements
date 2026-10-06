@@ -1,13 +1,6 @@
 import SwiftUI
 import DesignSystem
 
-struct Item: Identifiable, Hashable {
-    let id: UUID
-    let name: String
-    let subtitle: String
-    let price: String
-}
-
 enum CatalogState {
     case idle
     case loading
@@ -92,19 +85,6 @@ struct CatalogView: View {
         } catch {
             state = .error(error.localizedDescription)
         }
-    }
-}
-
-private extension Item {
-    static let sampleItems: [Item] = [
-        Item(id: UUID(), name: "Canvas Tote", subtitle: "Everyday carry", price: "$49"),
-        Item(id: UUID(), name: "Desk Lamp", subtitle: "Warm ambient light", price: "$79"),
-        Item(id: UUID(), name: "Ceramic Mug", subtitle: "Matte finish", price: "$24")
-    ]
-
-    static func sampleAsyncLoad() async throws -> [Item] {
-        try await Task.sleep(for: .milliseconds(300))
-        return sampleItems
     }
 }
 

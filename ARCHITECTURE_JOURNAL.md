@@ -125,3 +125,37 @@ Scope boundary captured for now:
 
 ### Publication candidate
 A small, opinionated `DesignSystem` extracted early is useful when it stays primitive-focused; showing where we intentionally stop (no feature logic, no domain) is as important as showing what we extracted.
+
+## Finding
+
+### Context
+Stage 4: Preview Isolation as an Architectural Signal
+
+We introduced `CatalogRepository` protocol and `Item` to the app target to simulate realistic infrastructure concerns (future Networking, Persistence, Analytics dependencies). We kept DesignSystem primitives (Badge, Card, AppButton) completely isolated with no infrastructure imports.
+
+### Decision / observation
+Preview isolation is not automatic from package structure. It is a **direct consequence of the dependency graph**.
+
+A `Badge` preview in DesignSystem compiles only DesignSystem, SwiftUI, and Foundation. A `CatalogView` preview in the app compiles the entire app target including Item, CatalogState, CatalogRepository, and all DesignSystem dependencies.
+
+The architectural boundary is not "package = fast, app = slow." The boundary is "what does this module's import graph require."
+
+### Benefits
+- Preview build time directly reflects architectural decisions.
+- A slow preview is a signal: the module has too many dependencies for its responsibility.
+- Fast, isolated previews become an architectural constraint: keep primitives truly primitive.
+- We can measure whether modularization actually improves preview performance (empirically, not by assumption).
+
+### Costs
+- A module that appears isolated (lives in Packages/) can still have a slow preview if its internal dependencies are heavy.
+- Requires discipline to keep low-level modules truly low-level.
+- If feature modules import infrastructure, preview isolation is lost immediately.
+
+### Reconsider when
+- A supposedly-isolated module's preview becomes slow (signals hidden dependencies).
+- A feature preview requires booting unrelated infrastructure (signals coupling).
+- Build times suggest the dependency graph has drifted from intention.
+
+### Publication candidate
+**"Preview performance as an architectural signal"** — The observation that preview compile time directly reveals module dependencies. A comparison before/after adding infrastructure to a module demonstrates this. This is useful teaching material because it's measurable and intuitive.
+
