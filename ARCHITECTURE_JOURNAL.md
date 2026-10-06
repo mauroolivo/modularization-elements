@@ -159,3 +159,42 @@ The architectural boundary is not "package = fast, app = slow." The boundary is 
 ### Publication candidate
 **"Preview performance as an architectural signal"** — The observation that preview compile time directly reveals module dependencies. A comparison before/after adding infrastructure to a module demonstrates this. This is useful teaching material because it's measurable and intuitive.
 
+
+## Finding
+
+### Context
+Stage 5 extracted the catalog screen into a real vertical feature module: `CatalogFeature`.
+
+### Decision / observation
+We moved `CatalogView`, catalog state, `Item`, repository abstractions, and feature-local preview fixtures into `Packages/CatalogFeature`. The app target now imports `CatalogFeature` and hosts only composition (`ContentView`), while the feature module owns the screen, loading flow, and previews.
+
+Current dependency diagram:
+```text
+modularization-elements app target
+└── imports CatalogFeature
+    └── CatalogFeature
+        ├── CatalogView (public entry point)
+        ├── Item / CatalogState / CatalogRepository (internal)
+        └── imports DesignSystem
+```
+
+The public surface stays intentionally small: the app uses `CatalogView()` and the module keeps helpers and state private/internal. Feature previews now live directly in `CatalogFeature` and can be built without importing the executable app target.
+
+### Benefits
+- Creates the first real reusable feature boundary in the app graph.
+- Separates app composition from feature ownership.
+- Lets the feature develop and preview independently of the executable target.
+- Keeps the module API minimal while preserving preview flexibility inside the package.
+
+### Costs
+- Adds one more package to resolve and maintain.
+- Moves the feature boundary into package/module wiring rather than a single app target.
+- Requires discipline to keep the public API narrow as inputs grow later.
+
+### Reconsider when
+- Catalog needs richer inputs that cannot stay internal to the module.
+- The feature starts depending on app-only concepts again.
+- Shared UI primitives or infrastructure concerns begin to blur the boundary.
+
+### Publication candidate
+A vertical feature extraction is compelling when the app target becomes mostly composition and the feature module owns its own previewable screen, state, and internal helpers with a tiny public entry point.

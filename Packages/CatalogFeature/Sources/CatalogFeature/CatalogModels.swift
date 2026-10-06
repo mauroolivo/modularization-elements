@@ -1,0 +1,40 @@
+import Foundation
+
+struct Item: Identifiable, Hashable, Sendable {
+    let id: UUID
+    let name: String
+    let subtitle: String
+    let price: String
+}
+
+extension Item {
+    static let sampleItems: [Item] = [
+        Item(id: UUID(), name: "Canvas Tote", subtitle: "Everyday carry", price: "$49"),
+        Item(id: UUID(), name: "Desk Lamp", subtitle: "Warm ambient light", price: "$79"),
+        Item(id: UUID(), name: "Ceramic Mug", subtitle: "Matte finish", price: "$24")
+    ]
+}
+
+enum CatalogState {
+    case idle
+    case loading
+    case loaded([Item])
+    case error(String)
+}
+
+protocol CatalogRepository: Sendable {
+    func fetchItems() async throws -> [Item]
+}
+
+actor MockCatalogRepository: CatalogRepository {
+    private let preloadedItems: [Item]
+
+    init(preloadedItems: [Item] = Item.sampleItems) {
+        self.preloadedItems = preloadedItems
+    }
+
+    func fetchItems() async throws -> [Item] {
+        try await Task.sleep(for: .milliseconds(100))
+        return preloadedItems
+    }
+}
