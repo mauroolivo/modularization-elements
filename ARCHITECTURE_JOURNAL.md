@@ -1123,3 +1123,48 @@ The important distinction is that the API-level change in `ItemDomain` fans out 
 
 ### Publication candidate
 The rebuild measurements make a strong teaching point: keeping modules small is not enough by itself; the volatility of their public API matters, because high-fan-in shared modules amplify even tiny changes.
+
+
+## Finding
+
+### Context
+Stage 16 focused on architecture anti-pattern judgment: deliberately identify harmful structures, describe why they are risky, and define concrete detection rules.
+
+### Decision / observation
+Instead of breaking the production graph (`CatalogFeature`, `FavoritesFeature`, `ItemDomain`, `Networking`, `DesignSystem`), we created an isolated stress lab package:
+
+- `Packages/ArchitectureStressLab`
+  - `StressCore` (library target)
+  - `StressLabClient` (executable target)
+  - `StressCoreTests` (test target)
+
+The lab encodes five anti-pattern exercises with explicit fields for:
+1. harmful observation
+2. smell
+3. fix
+4. detection rule
+
+Covered anti-patterns:
+- Feature cycle
+- Giant Core
+- Protocol explosion
+- Micro-modules
+- Under-modularization
+
+This keeps the app graph healthy while still making Stage 16 executable and reviewable.
+
+### Benefits
+- Preserves production stability while still training architectural diagnosis.
+- Produces reusable, explicit anti-pattern rules instead of ad-hoc advice.
+- Keeps the stage verifiable through code, executable output, and tests.
+
+### Costs
+- The lab is pedagogical, not a literal in-graph break/fix sequence.
+- Adds one extra local package to maintain for future stages.
+
+### Reconsider when
+- We specifically need to observe real compile failures from cycles in the app graph.
+- The lab drifts from current architecture concerns and no longer reflects real pressure.
+
+### Publication candidate
+A safe "stress-lab" package is a practical way to teach anti-pattern diagnosis in modular systems: you can exercise harmful patterns, validate fixes, and capture detection rules without destabilizing the production dependency graph.
