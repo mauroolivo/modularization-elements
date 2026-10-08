@@ -1,17 +1,26 @@
 import SwiftUI
 import DesignSystem
 
+/// Refactored CatalogView using lightweight CatalogInput dependency.
+/// The view only needs access to a repository, expressed via CatalogInput.
+/// This separates:
+/// - UI behavior (lives here)
+/// - Data fetching interface (CatalogRepository)
+/// - Preview fixture setup (CatalogInput, CatalogInputFixture)
+/// - Production infrastructure assembly (lives in app layer)
 public struct CatalogView: View {
     @State private var state: CatalogState
-    private let repository: MockCatalogRepository
+    private let repository: CatalogRepository
 
-    public init() {
-        self.init(initialState: .idle)
+    /// Public initializer accepts explicit CatalogInput
+    public init(input: CatalogInput) {
+        self.init(initialState: .idle, repository: input.repository)
     }
 
+    /// Internal initializer for preview state overrides
     init(
         initialState: CatalogState,
-        repository: MockCatalogRepository = MockCatalogRepository()
+        repository: CatalogRepository = MockCatalogRepository()
     ) {
         _state = State(initialValue: initialState)
         self.repository = repository
@@ -89,6 +98,8 @@ public struct CatalogView: View {
     }
 }
 
+// MARK: - Previews
+
 #Preview("Loaded") {
     CatalogView(
         initialState: .loaded(Item.sampleItems),
@@ -105,4 +116,17 @@ public struct CatalogView: View {
         initialState: .error("The catalog service is unavailable."),
         repository: MockCatalogRepository(preloadedItems: [])
     )
+}
+
+#Preview("Empty Catalog") {
+    CatalogView(
+        initialState: .loaded([]),
+        repository: MockCatalogRepository(preloadedItems: [])
+    )
+}
+
+// Using the CatalogInputFixture for a cleaner preview expression:
+#Preview("Loaded (using fixture)") {
+    let input = CatalogInputFixture.loaded()
+    CatalogView(input: input)
 }
