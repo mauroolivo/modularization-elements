@@ -678,3 +678,448 @@ Tests run via `swift test` inside each package, confirming independent module te
 
 ### Publication candidate
 A concrete demonstration that `swift test` at package scope catches behavior and dependency issues without compiling the full app graph is useful evidence for modular testing strategy.
+
+## Finding
+
+### Context
+Stage 15 examined the real dependency graph and measured rebuild blast radius for implementation-only versus API-level edits.
+
+### Decision / observation
+The current module graph is intentionally shallow at the app layer but has a few high-fan-in/shared nodes:
+
+```text
+App
+├── CatalogFeature
+├── FavoritesFeature
+├── DesignSystem
+├── ItemDomain
+└── Networking
+
+CatalogFeature ──┬── DesignSystem
+                 └── ItemDomain
+
+FavoritesFeature ──┬── DesignSystem
+                  └── ItemDomain
+
+ItemDomain    (shared domain, highest fan-in)
+DesignSystem  (shared UI leaf, fan-out to both features)
+Networking    (infrastructure leaf, only app-facing)
+```
+
+Loose stability classification:
+- **stable-ish:** `Networking`, `DesignSystem`
+- **volatile/shared:** `ItemDomain`
+- **feature-local/contained:** `CatalogFeature`, `FavoritesFeature`
+
+Measured controlled edits:
+- **CatalogFeature implementation-only refactor** (`CatalogView.swift` private helper rename)
+  - rebuild scope: `CatalogFeature` + app target
+  - timing: `real 4.40s`
+  - build timing summary: `SwiftCompile (2 tasks)`
+- **ItemDomain API addition** (`Item.displayTitle`)
+  - rebuild scope: `ItemDomain` + `CatalogFeature` + `FavoritesFeature` + app target
+  - timing: `real 4.37s`
+  - build timing summary: `SwiftCompile (10 tasks)`
+- **Networking implementation-only refactor** (`HTTPClient.swift` private helper rename)
+  - rebuild scope: `Networking` + app target
+  - timing: `real 3.74s`
+  - build timing summary: `SwiftCompile (3 tasks)`
+
+The important distinction is that the API-level change in `ItemDomain` fans out to both vertical features, while implementation-only changes stay much more local and mostly affect the owning module plus the app that links it.
+
+### Benefits
+- Quantifies why shared low-level modules deserve caution: small API changes ripple widely.
+- Shows that feature implementation edits are comparatively cheap when boundaries are clean.
+- Confirms the app remains the composition boundary and absorbs the final link step.
+
+### Costs
+- Shared domain changes now have the broadest rebuild footprint in the system.
+- Even additive API changes in a small shared type can fan out to multiple packages and tests.
+- The graph is healthy, but the cost profile is now visible and should inform where we place volatile concepts.
+
+### Reconsider when
+- `Item` starts changing frequently enough that the shared boundary slows iteration.
+- `DesignSystem` begins to accumulate feature-specific UI and becomes another volatile shared module.
+- Build time differences become large enough to justify a static/dynamic linking experiment for a candidate module.
+
+### Publication candidate
+The rebuild measurements make a strong teaching point: keeping modules small is not enough by itself; the volatility of their public API matters, because high-fan-in shared modules amplify even tiny changes.
+
+## Finding
+
+### Context
+Stage 15 examined the real dependency graph and measured rebuild blast radius for implementation-only versus API-level edits.
+
+### Decision / observation
+The current module graph is intentionally shallow at the app layer but has a few high-fan-in/shared nodes:
+
+```text
+App
+├── CatalogFeature
+├── FavoritesFeature
+├── DesignSystem
+├── ItemDomain
+└── Networking
+
+CatalogFeature ──┬── DesignSystem
+                 └── ItemDomain
+
+FavoritesFeature ──┬── DesignSystem
+                  └── ItemDomain
+
+ItemDomain    (shared domain, highest fan-in)
+DesignSystem  (shared UI leaf, fan-out to both features)
+Networking    (infrastructure leaf, only app-facing)
+```
+
+Loose stability classification:
+- **stable-ish:** `Networking`, `DesignSystem`
+- **volatile/shared:** `ItemDomain`
+- **feature-local/contained:** `CatalogFeature`, `FavoritesFeature`
+
+Measured controlled edits:
+- **CatalogFeature implementation-only refactor** (`CatalogView.swift` private helper rename)
+  - rebuild scope: `CatalogFeature` + app target
+  - timing: `real 4.40s`
+  - build timing summary: `SwiftCompile (2 tasks)`
+- **ItemDomain API addition** (`Item.displayTitle`)
+  - rebuild scope: `ItemDomain` + `CatalogFeature` + `FavoritesFeature` + app target
+  - timing: `real 4.37s`
+  - build timing summary: `SwiftCompile (10 tasks)`
+- **Networking implementation-only refactor** (`HTTPClient.swift` private helper rename)
+  - rebuild scope: `Networking` + app target
+  - timing: `real 3.74s`
+  - build timing summary: `SwiftCompile (3 tasks)`
+
+The important distinction is that the API-level change in `ItemDomain` fans out to both vertical features, while implementation-only changes stay much more local and mostly affect the owning module plus the app that links it.
+
+### Benefits
+- Quantifies why shared low-level modules deserve caution: small API changes ripple widely.
+- Shows that feature implementation edits are comparatively cheap when boundaries are clean.
+- Confirms the app remains the composition boundary and absorbs the final link step.
+
+### Costs
+- Shared domain changes now have the broadest rebuild footprint in the system.
+- Even additive API changes in a small shared type can fan out to multiple packages and tests.
+- The graph is healthy, but the cost profile is now visible and should inform where we place volatile concepts.
+
+### Reconsider when
+- `Item` starts changing frequently enough that the shared boundary slows iteration.
+- `DesignSystem` begins to accumulate feature-specific UI and becomes another volatile shared module.
+- Build time differences become large enough to justify a static/dynamic linking experiment for a candidate module.
+
+### Publication candidate
+The rebuild measurements make a strong teaching point: keeping modules small is not enough by itself; the volatility of their public API matters, because high-fan-in shared modules amplify even tiny changes.
+
+## Finding
+
+### Context
+Stage 15 examined the real dependency graph and measured rebuild blast radius for implementation-only versus API-level edits.
+
+### Decision / observation
+The current module graph is intentionally shallow at the app layer but has a few high-fan-in/shared nodes:
+
+```text
+App
+├── CatalogFeature
+├── FavoritesFeature
+├── DesignSystem
+├── ItemDomain
+└── Networking
+
+CatalogFeature ──┬── DesignSystem
+                 └── ItemDomain
+
+FavoritesFeature ──┬── DesignSystem
+                  └── ItemDomain
+
+ItemDomain    (shared domain, highest fan-in)
+DesignSystem  (shared UI leaf, fan-out to both features)
+Networking    (infrastructure leaf, only app-facing)
+```
+
+Loose stability classification:
+- **stable-ish:** `Networking`, `DesignSystem`
+- **volatile/shared:** `ItemDomain`
+- **feature-local/contained:** `CatalogFeature`, `FavoritesFeature`
+
+Measured controlled edits:
+- **CatalogFeature implementation-only refactor** (`CatalogView.swift` private helper rename)
+  - rebuild scope: `CatalogFeature` + app target
+  - timing: `real 4.40s`
+  - build timing summary: `SwiftCompile (2 tasks)`
+- **ItemDomain API addition** (`Item.displayTitle`)
+  - rebuild scope: `ItemDomain` + `CatalogFeature` + `FavoritesFeature` + app target
+  - timing: `real 4.37s`
+  - build timing summary: `SwiftCompile (10 tasks)`
+- **Networking implementation-only refactor** (`HTTPClient.swift` private helper rename)
+  - rebuild scope: `Networking` + app target
+  - timing: `real 3.74s`
+  - build timing summary: `SwiftCompile (3 tasks)`
+
+The important distinction is that the API-level change in `ItemDomain` fans out to both vertical features, while implementation-only changes stay much more local and mostly affect the owning module plus the app that links it.
+
+### Benefits
+- Quantifies why shared low-level modules deserve caution: small API changes ripple widely.
+- Shows that feature implementation edits are comparatively cheap when boundaries are clean.
+- Confirms the app remains the composition boundary and absorbs the final link step.
+
+### Costs
+- Shared domain changes now have the broadest rebuild footprint in the system.
+- Even additive API changes in a small shared type can fan out to multiple packages and tests.
+- The graph is healthy, but the cost profile is now visible and should inform where we place volatile concepts.
+
+### Reconsider when
+- `Item` starts changing frequently enough that the shared boundary slows iteration.
+- `DesignSystem` begins to accumulate feature-specific UI and becomes another volatile shared module.
+- Build time differences become large enough to justify a static/dynamic linking experiment for a candidate module.
+
+### Publication candidate
+The rebuild measurements make a strong teaching point: keeping modules small is not enough by itself; the volatility of their public API matters, because high-fan-in shared modules amplify even tiny changes.
+
+## Finding
+
+### Context
+Stage 15 examined the real dependency graph and measured rebuild blast radius for implementation-only versus API-level edits.
+
+### Decision / observation
+The current module graph is intentionally shallow at the app layer but has a few high-fan-in/shared nodes:
+
+```text
+App
+├── CatalogFeature
+├── FavoritesFeature
+├── DesignSystem
+├── ItemDomain
+└── Networking
+
+CatalogFeature ──┬── DesignSystem
+                 └── ItemDomain
+
+FavoritesFeature ──┬── DesignSystem
+                  └── ItemDomain
+
+ItemDomain    (shared domain, highest fan-in)
+DesignSystem  (shared UI leaf, fan-out to both features)
+Networking    (infrastructure leaf, only app-facing)
+```
+
+Loose stability classification:
+- **stable-ish:** `Networking`, `DesignSystem`
+- **volatile/shared:** `ItemDomain`
+- **feature-local/contained:** `CatalogFeature`, `FavoritesFeature`
+
+Measured controlled edits:
+- **CatalogFeature implementation-only refactor** (`CatalogView.swift` private helper rename)
+  - rebuild scope: `CatalogFeature` + app target
+  - timing: `real 4.40s`
+  - build timing summary: `SwiftCompile (2 tasks)`
+- **ItemDomain API addition** (`Item.displayTitle`)
+  - rebuild scope: `ItemDomain` + `CatalogFeature` + `FavoritesFeature` + app target
+  - timing: `real 4.37s`
+  - build timing summary: `SwiftCompile (10 tasks)`
+- **Networking implementation-only refactor** (`HTTPClient.swift` private helper rename)
+  - rebuild scope: `Networking` + app target
+  - timing: `real 3.74s`
+  - build timing summary: `SwiftCompile (3 tasks)`
+
+The important distinction is that the API-level change in `ItemDomain` fans out to both vertical features, while implementation-only changes stay much more local and mostly affect the owning module plus the app that links it.
+
+### Benefits
+- Quantifies why shared low-level modules deserve caution: small API changes ripple widely.
+- Shows that feature implementation edits are comparatively cheap when boundaries are clean.
+- Confirms the app remains the composition boundary and absorbs the final link step.
+
+### Costs
+- Shared domain changes now have the broadest rebuild footprint in the system.
+- Even additive API changes in a small shared type can fan out to multiple packages and tests.
+- The graph is healthy, but the cost profile is now visible and should inform where we place volatile concepts.
+
+### Reconsider when
+- `Item` starts changing frequently enough that the shared boundary slows iteration.
+- `DesignSystem` begins to accumulate feature-specific UI and becomes another volatile shared module.
+- Build time differences become large enough to justify a static/dynamic linking experiment for a candidate module.
+
+### Publication candidate
+The rebuild measurements make a strong teaching point: keeping modules small is not enough by itself; the volatility of their public API matters, because high-fan-in shared modules amplify even tiny changes.
+
+## Finding
+
+### Context
+Stage 15 examined the real dependency graph and measured rebuild blast radius for implementation-only versus API-level edits.
+
+### Decision / observation
+The current module graph is intentionally shallow at the app layer but has a few high-fan-in/shared nodes:
+
+
+
+Loose stability classification:
+- **stable-ish:** , 
+- **volatile/shared:** 
+- **feature-local/contained:** , 
+
+Measured controlled edits:
+- **CatalogFeature implementation-only refactor** ( private helper rename)
+  - rebuild scope:  + app target
+  - timing: 
+  - build timing summary: 
+- **ItemDomain API addition** ()
+  - rebuild scope:  +  +  + app target
+  - timing: 
+  - build timing summary: 
+- **Networking implementation-only refactor** ( private helper rename)
+  - rebuild scope:  + app target
+  - timing: 
+  - build timing summary: 
+
+The important distinction is that the API-level change in  fans out to both vertical features, while implementation-only changes stay much more local and mostly affect the owning module plus the app that links it.
+
+### Benefits
+- Quantifies why shared low-level modules deserve caution: small API changes ripple widely.
+- Shows that feature implementation edits are comparatively cheap when boundaries are clean.
+- Confirms the app remains the composition boundary and absorbs the final link step.
+
+### Costs
+- Shared domain changes now have the broadest rebuild footprint in the system.
+- Even additive API changes in a small shared type can fan out to multiple packages and tests.
+- The graph is healthy, but the cost profile is now visible and should inform where we place volatile concepts.
+
+### Reconsider when
+-  starts changing frequently enough that the shared boundary slows iteration.
+-  begins to accumulate feature-specific UI and becomes another volatile shared module.
+- Build time differences become large enough to justify a static/dynamic linking experiment for a candidate module.
+
+### Publication candidate
+The rebuild measurements make a strong teaching point: keeping modules small is not enough by itself; the volatility of their public API matters, because high-fan-in shared modules amplify even tiny changes.
+
+## Finding
+
+### Context
+Stage 15 examined the real dependency graph and measured rebuild blast radius for implementation-only versus API-level edits.
+
+### Decision / observation
+The current module graph is intentionally shallow at the app layer but has a few high-fan-in/shared nodes:
+
+```text
+App
+├── CatalogFeature
+├── FavoritesFeature
+├── DesignSystem
+├── ItemDomain
+└── Networking
+
+CatalogFeature ──┬── DesignSystem
+                 └── ItemDomain
+
+FavoritesFeature ──┬── DesignSystem
+                  └── ItemDomain
+
+ItemDomain    (shared domain, highest fan-in)
+DesignSystem  (shared UI leaf, fan-out to both features)
+Networking    (infrastructure leaf, only app-facing)
+```
+
+Loose stability classification:
+- **stable-ish:** `Networking`, `DesignSystem`
+- **volatile/shared:** `ItemDomain`
+- **feature-local/contained:** `CatalogFeature`, `FavoritesFeature`
+
+Measured controlled edits:
+- **CatalogFeature implementation-only refactor** (`CatalogView.swift` private helper rename)
+  - rebuild scope: `CatalogFeature` + app target
+  - timing: `real 4.40s`
+  - build timing summary: `SwiftCompile (2 tasks)`
+- **ItemDomain API addition** (`Item.displayTitle`)
+  - rebuild scope: `ItemDomain` + `CatalogFeature` + `FavoritesFeature` + app target
+  - timing: `real 4.37s`
+  - build timing summary: `SwiftCompile (10 tasks)`
+- **Networking implementation-only refactor** (`HTTPClient.swift` private helper rename)
+  - rebuild scope: `Networking` + app target
+  - timing: `real 3.74s`
+  - build timing summary: `SwiftCompile (3 tasks)`
+
+The important distinction is that the API-level change in `ItemDomain` fans out to both vertical features, while implementation-only changes stay much more local and mostly affect the owning module plus the app that links it.
+
+### Benefits
+- Quantifies why shared low-level modules deserve caution: small API changes ripple widely.
+- Shows that feature implementation edits are comparatively cheap when boundaries are clean.
+- Confirms the app remains the composition boundary and absorbs the final link step.
+
+### Costs
+- Shared domain changes now have the broadest rebuild footprint in the system.
+- Even additive API changes in a small shared type can fan out to multiple packages and tests.
+- The graph is healthy, but the cost profile is now visible and should inform where we place volatile concepts.
+
+### Reconsider when
+- `Item` starts changing frequently enough that the shared boundary slows iteration.
+- `DesignSystem` begins to accumulate feature-specific UI and becomes another volatile shared module.
+- Build time differences become large enough to justify a static/dynamic linking experiment for a candidate module.
+
+### Publication candidate
+The rebuild measurements make a strong teaching point: keeping modules small is not enough by itself; the volatility of their public API matters, because high-fan-in shared modules amplify even tiny changes.
+
+## Finding
+
+### Context
+Stage 15 examined the real dependency graph and measured rebuild blast radius for implementation-only versus API-level edits.
+
+### Decision / observation
+The current module graph is intentionally shallow at the app layer but has a few high-fan-in/shared nodes:
+
+```text
+App
+├── CatalogFeature
+├── FavoritesFeature
+├── DesignSystem
+├── ItemDomain
+└── Networking
+
+CatalogFeature ──┬── DesignSystem
+                 └── ItemDomain
+
+FavoritesFeature ──┬── DesignSystem
+                  └── ItemDomain
+
+ItemDomain    (shared domain, highest fan-in)
+DesignSystem  (shared UI leaf, fan-out to both features)
+Networking    (infrastructure leaf, only app-facing)
+```
+
+Loose stability classification:
+- **stable-ish:** `Networking`, `DesignSystem`
+- **volatile/shared:** `ItemDomain`
+- **feature-local/contained:** `CatalogFeature`, `FavoritesFeature`
+
+Measured controlled edits:
+- **CatalogFeature implementation-only refactor** (`CatalogView.swift` private helper rename)
+  - rebuild scope: `CatalogFeature` + app target
+  - timing: `real 4.40s`
+  - build timing summary: `SwiftCompile (2 tasks)`
+- **ItemDomain API addition** (`Item.displayTitle`)
+  - rebuild scope: `ItemDomain` + `CatalogFeature` + `FavoritesFeature` + app target
+  - timing: `real 4.37s`
+  - build timing summary: `SwiftCompile (10 tasks)`
+- **Networking implementation-only refactor** (`HTTPClient.swift` private helper rename)
+  - rebuild scope: `Networking` + app target
+  - timing: `real 3.74s`
+  - build timing summary: `SwiftCompile (3 tasks)`
+
+The important distinction is that the API-level change in `ItemDomain` fans out to both vertical features, while implementation-only changes stay much more local and mostly affect the owning module plus the app that links it.
+
+### Benefits
+- Quantifies why shared low-level modules deserve caution: small API changes ripple widely.
+- Shows that feature implementation edits are comparatively cheap when boundaries are clean.
+- Confirms the app remains the composition boundary and absorbs the final link step.
+
+### Costs
+- Shared domain changes now have the broadest rebuild footprint in the system.
+- Even additive API changes in a small shared type can fan out to multiple packages and tests.
+- The graph is healthy, but the cost profile is now visible and should inform where we place volatile concepts.
+
+### Reconsider when
+- `Item` starts changing frequently enough that the shared boundary slows iteration.
+- `DesignSystem` begins to accumulate feature-specific UI and becomes another volatile shared module.
+- Build time differences become large enough to justify a static/dynamic linking experiment for a candidate module.
+
+### Publication candidate
+The rebuild measurements make a strong teaching point: keeping modules small is not enough by itself; the volatility of their public API matters, because high-fan-in shared modules amplify even tiny changes.

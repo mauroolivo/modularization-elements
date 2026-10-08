@@ -14,14 +14,10 @@ public actor HTTPClient {
             throw HTTPError.invalidResponse
         }
 
-        let headers = httpResponse.allHeaderFields.reduce(into: [String: String]()) { partialResult, element in
-            partialResult[String(describing: element.key)] = String(describing: element.value)
-        }
-
         let http = HTTPResponse(
             url: httpResponse.url,
             statusCode: httpResponse.statusCode,
-            headers: headers,
+            headers: responseHeaders(for: httpResponse),
             body: data
         )
 
@@ -39,5 +35,11 @@ public actor HTTPClient {
     ) async throws -> T {
         let response = try await send(request)
         return try response.decode(T.self, using: decoder)
+    }
+
+    private func responseHeaders(for response: HTTPURLResponse) -> [String: String] {
+        response.allHeaderFields.reduce(into: [String: String]()) { partialResult, element in
+            partialResult[String(describing: element.key)] = String(describing: element.value)
+        }
     }
 }

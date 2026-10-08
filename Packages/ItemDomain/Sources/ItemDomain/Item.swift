@@ -12,4 +12,12 @@ public struct Item: Identifiable, Hashable, Sendable, Codable {
         self.subtitle = subtitle
         self.price = price
     }
+
+    public var searchName: String {
+        "\(name) \(subtitle)"
+    }
+
+    public var displayTitle: String {
+        name
+    }
 }

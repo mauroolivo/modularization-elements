@@ -60,7 +60,7 @@ public struct CatalogView: View {
                                         selectedItem = item
                                     }
                                     AppButton("Favorite") {
-                                        onAction(.addToFavorites(item))
+                                        favoriteSelected(item)
                                     }
                                 }
                             }
@@ -112,6 +112,10 @@ public struct CatalogView: View {
 
     private func badgeText(for item: Item) -> String {
         "Featured: \(item.name)"
+    }
+
+    private func favoriteSelected(_ item: Item) {
+        onAction(.addToFavorites(item))
     }
 }
 

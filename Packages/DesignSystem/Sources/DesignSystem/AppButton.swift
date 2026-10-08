@@ -12,7 +12,7 @@ public struct AppButton: View {
     public var body: some View {
         Button(title, action: action)
             .buttonStyle(.borderedProminent)
-            .controlSize(.small)
+            .controlSize(.regular)
     }
 }
 
