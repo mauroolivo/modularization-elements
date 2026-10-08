@@ -198,3 +198,130 @@ The public surface stays intentionally small: the app uses `CatalogView()` and t
 
 ### Publication candidate
 A vertical feature extraction is compelling when the app target becomes mostly composition and the feature module owns its own previewable screen, state, and internal helpers with a tiny public entry point.
+
+## Finding
+
+### Context
+Stage 6: Preview Dependencies and Feature Inputs
+
+Infrastructure needs (Networking, session, analytics) arrive naturally as features become realistic. The question is: do feature UIs need to know about that infrastructure to be previewed?
+
+### Decision / observation
+
+We created two versions of CatalogView:
+
+**CatalogViewProblematic:** Feature view requires HTTPClient, SessionManager, AnalyticsTracker as constructor parameters.
+- Previews must construct all infrastructure to render the UI
+- Adding infrastructure concerns requires changing preview code
+- Preview compilation scope expands to include Networking and its dependencies
+
+**CatalogView (refactored):** Feature view accepts lightweight `CatalogInput` struct containing only what the UI needs (a repository).
+- Previews express fixture behavior without mentioning infrastructure
+- CatalogInputFixture provides named fixture builders
+- Production assembly (app layer) creates real infrastructure and passes via CatalogInput
+- Preview compilation scope stays bounded: CatalogFeature → DesignSystem only
+
+The architectural separation works like this:
+
+```
+Production assembly (app knows about)          Feature (knows about)
+    HTTPClient                                 ↓
+    SessionManager                          CatalogInput
+    AnalyticsTracker                           ↓
+        ↓                                   CatalogView
+    LiveCatalogRepository                      ↓
+        ↓                                   CatalogRepository
+    CatalogInput                               (protocol)
+
+Preview fixture                             Feature (knows about)
+    MockCatalogRepository                   ↓
+        ↓                                   CatalogInput
+    CatalogInput                               ↓
+        ↓                                   CatalogView
+    CatalogView
+```
+
+The `CatalogInput` struct is the boundary. It is not a protocol, not an abstraction layer, just a lightweight struct that says: "the feature UI needs a repository, nothing else."
+
+### Benefits
+- Feature previews remain decoupled from infrastructure initialization
+- Adding infrastructure concerns (logger, cache, etc.) doesn't require changing feature preview code
+- Production infrastructure assembly lives in one place (app layer)
+- Preview fixture logic can be named and composed (`CatalogInputFixture.loaded()`, `CatalogInputFixture.empty()`)
+- Feature UI surface stays intentional: feature.init(input:) clearly states what matters
+- Testing feature behavior is simpler: construct CatalogInput with mock, test the view
+
+### Costs
+- One extra struct (CatalogInput) in the feature namespace
+- Feature must maintain a protocol (CatalogRepository) that mirrors preview/production needs
+- Feature UIs do need to know which repository/service interface they need (they just don't know HOW it's built)
+- If a feature truly needs 5+ different services, this pattern can grow bulky (though it's still better than sprawling init parameters)
+
+### Reconsider when
+- Feature needs so many inputs that CatalogInput becomes a large struct with 5+ fields
+- Feature needs to express complex conditional behavior based on which services are available
+- Feature inputs don't align with test seams (which would indicate the feature was split incorrectly)
+
+### Pattern name
+This is lightweight **feature input modeling**. It is not dependency inversion (no reversed direction). It is not a service locator. It is explicit dependency declaration at feature boundaries with preview-friendly fixture builders.
+
+### Publication candidate
+**"Feature inputs vs. infrastructure assembly"** — The observation that UI layers should declare what they need (lightweight, named), not require consumers to assemble infrastructure. Shows concrete before/after and compile-time difference. Valuable because it contradicts both "inject everything" and "use a service locator."
+
+Also: **"Preview isolation as a concrete architectural choice"** — CatalogInputFixture directly enables isolated previews. This is measurable: a CatalogView preview compiles quickly, a ContentView preview with full infrastructure takes longer. Shows that modularization + lightweight inputs improve day-to-day developer experience.
+
+## Finding
+
+### Context
+Stage 6 Refactored: Dependency Injection Direction
+
+The initial Stage 6 implementation placed `LiveCatalogRepository` inside `CatalogFeature` package, making the feature depend on Networking. A key architectural question was raised: **should features depend on infrastructure, or should the app layer assemble and inject infrastructure?**
+
+### Decision / observation
+
+The correct modular pattern is:
+
+```text
+❌ Wrong:     Feature → Infrastructure
+✓ Correct:   Infrastructure ← Feature Input ← Feature
+```
+
+This means:
+- **CatalogFeature** depends on: DesignSystem (only)
+- **CatalogFeature** exports: CatalogRepository protocol, CatalogInput struct, CatalogView
+- **App layer** depends on: Networking, CatalogFeature, DesignSystem
+- **App layer** creates: HTTPClient, SessionManager, LiveCatalogRepository, injects via CatalogInput
+
+### Changes made
+1. Removed Networking from CatalogFeature's Package.swift dependencies
+2. Moved LiveCatalogRepository implementation to app target (LiveCatalogRepository.swift)
+3. Updated ContentView to assemble infrastructure: create HTTPClient → create LiveCatalogRepository → wrap in CatalogInput → pass to CatalogView
+4. Deleted CatalogViewProblematic.swift (was demonstrating the antipattern)
+5. Added Networking as dependency to app target in Xcode project
+
+### Benefits
+- **True modularity**: Feature has zero knowledge of Networking, HTTPClient, SessionManager
+- **Reusability**: CatalogFeature can be embedded in any app context
+- **Testability**: Tests construct CatalogInput with mock, no infrastructure ceremony
+- **Preview simplicity**: Previews use fixtures (`CatalogInputFixture.loaded()`) without any infrastructure knowledge
+- **Composition flexibility**: New infrastructure (Analytics, Database, Auth) arrives in app layer; feature code doesn't change
+- **Dependency direction**: Always points inward (app → feature, never feature → app infrastructure)
+
+### Costs
+- Feature must know what protocol/interface it needs (it just doesn't know the implementation)
+- Requires discipline at app composition to wire everything correctly
+- If a feature needs 5+ different services, CatalogInput struct grows (though this is usually a signal to split the feature)
+
+### Architectural insight
+
+The question **"Inject from app to feature, or let feature depend on infrastructure?"** has a clear answer in modular architecture:
+
+**Features should declare inputs (lightweight, named). The app layer assembles infrastructure.**
+
+This pattern is not new, but it is often violated when features are directly packaged with dependencies. By keeping CatalogFeature focused on `CatalogRepository` protocol and CatalogInput boundary, and moving infrastructure assembly to the app layer, we preserve feature reusability and preview performance.
+
+### Publication candidate
+**"Dependency direction in modular architecture"** — A concrete example showing why features should not depend on infrastructure packages, and how to structure app-level assembly to inject infrastructure via lightweight feature inputs. Includes before/after code, dependency graphs, and measurements of preview compile time.
+
+Also: **"The correct place for LiveCatalogRepository"** — Live implementations belong in the app layer, not feature packages. Features export protocols and receive implementations via lightweight input models.
+
