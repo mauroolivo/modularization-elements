@@ -2,19 +2,32 @@
 
 import SwiftUI
 import CatalogFeature
+import FavoritesFeature
 
 struct ContentView: View {
-    private let input: CatalogInput
+    private let catalogInput: CatalogInput
+    private let favoritesInput: FavoritesInput
 
-    init(input: CatalogInput) {
-        self.input = input
+    init(catalogInput: CatalogInput, favoritesInput: FavoritesInput) {
+        self.catalogInput = catalogInput
+        self.favoritesInput = favoritesInput
     }
 
     var body: some View {
-        CatalogView(input: input)
+        TabView {
+            CatalogView(input: catalogInput)
+                .tabItem {
+                    Label("Catalog", systemImage: "square.grid.2x2")
+                }
+
+            FavoritesView(input: favoritesInput)
+                .tabItem {
+                    Label("Favorites", systemImage: "heart")
+                }
+        }
     }
 }
 
 #Preview {
-    ContentView(input: .default)
+    ContentView(catalogInput: .default, favoritesInput: .default)
 }

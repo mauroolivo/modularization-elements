@@ -462,3 +462,76 @@ CatalogFeature
 
 ### Publication candidate
 A thin `AppComposition` is a practical teaching example of the difference between “the app owns assembly” and “the app target should be empty.” The refactor shows that the app can stay thin without pretending it has no responsibilities.
+
+## Finding
+
+### Context
+Stage 10 added the first second vertical feature: `FavoritesFeature`.
+
+### Decision / observation
+We intentionally made `FavoritesFeature` reuse `CatalogFeature.Item` rather than introduce a second, superficially similar item model. That made the shared-domain question visible immediately: the two features can share a concept for now, but the sharing currently travels through a feature package, not a dedicated domain module.
+
+The app target now composes both vertical features via tabs:
+
+```text
+modularization-elements app target
+├── imports CatalogFeature
+├── imports FavoritesFeature
+├── CatalogView(input: catalogInput)
+└── FavoritesView(input: favoritesInput)
+```
+
+This keeps feature-to-feature communication out of the feature modules themselves while letting the app own cross-feature composition. It also makes the shared-item question visible without forcing a premature domain extraction.
+
+### Benefits
+- Demonstrates that a second feature can be added without creating feature-to-feature imports.
+- Keeps app-level orchestration explicit and easy to inspect.
+- Forces the shared-domain question to appear as an architectural decision instead of an accidental duplicate type.
+
+### Costs
+- `FavoritesFeature` is coupled to `CatalogFeature` for `Item`, so the shared concept is not yet independently owned.
+- Reusing a feature-owned model across a sibling feature increases fan-out from that feature package.
+- If more features need `Item`, `CatalogFeature` may become an accidental shared-domain module.
+
+### Reconsider when
+- Another feature needs `Item` and `CatalogFeature` starts looking like a shared dependency rather than a feature.
+- We need feature-specific item variants and the reused model becomes too narrow.
+- Cross-feature sharing becomes stable enough to justify a dedicated domain boundary.
+
+### Publication candidate
+The first shared-domain question is best introduced by a second feature, not by inventing a domain module upfront. Showing the cost of reusing a feature-owned type is a good setup for later comparing against a real shared-domain extraction.
+
+
+## Finding
+
+### Context
+Stage 10 added a second vertical feature (`FavoritesFeature`) to pressure-test boundaries after `CatalogFeature`.
+
+### Decision / observation
+We created `FavoritesFeature` as its own package/target and composed it in the app via a second tab. For this stage, `FavoritesFeature` intentionally reuses `CatalogFeature.Item` instead of introducing a duplicate item model.
+
+This makes the shared-domain question explicit without prematurely creating a domain module:
+
+```text
+App
+|- CatalogFeature
+`- FavoritesFeature
+   `- imports CatalogFeature (Item)
+```
+
+### Benefits
+- Confirms a second feature can be added without feature-to-feature runtime orchestration.
+- Keeps cross-feature composition in the app layer.
+- Surfaces ownership pressure around shared models early and concretely.
+
+### Costs
+- `FavoritesFeature` now depends on `CatalogFeature` for `Item`.
+- `CatalogFeature` risks becoming an accidental shared-domain module as fan-in grows.
+
+### Reconsider when
+- A third feature needs `Item`.
+- `Item` changes independently from catalog-specific needs.
+- Shared model volatility starts causing broad rebuild impact.
+
+### Publication candidate
+Introducing the second feature before creating a shared domain module is a useful teaching step: it shows when sharing looks convenient, and when it starts signaling a real domain boundary.
