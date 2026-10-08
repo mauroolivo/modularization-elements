@@ -325,3 +325,51 @@ This pattern is not new, but it is often violated when features are directly pac
 
 Also: **"The correct place for LiveCatalogRepository"** — Live implementations belong in the app layer, not feature packages. Features export protocols and receive implementations via lightweight input models.
 
+
+## Finding
+
+### Context
+Stage 7 introduced a focused infrastructure boundary in `Packages/Networking` and tested whether `CatalogFeature` should depend on it directly.
+
+### Decision / observation
+`Networking` now owns HTTP infrastructure primitives (`HTTPClient`, `HTTPRequest`, `HTTPResponse`, `HTTPMethod`, `HTTPError`) and nothing feature-specific. The `CatalogFeature` package no longer depends on `Networking`; it owns only feature models, repository protocol, and preview mock data.
+
+The app target now assembles the live path:
+- `ContentView` imports `CatalogFeature` and `Networking`
+- `LiveCatalogRepository` lives in the app layer
+- `LiveCatalogRepository` uses `HTTPClient` through an app-owned endpoint/fallback path
+- `CatalogView` still receives a lightweight `CatalogInput`
+
+Validated dependency shape:
+```text
+App target
+├── imports CatalogFeature
+├── imports Networking
+└── owns LiveCatalogRepository
+
+CatalogFeature
+├── owns CatalogView / CatalogInput / CatalogRepository / MockCatalogRepository
+└── imports DesignSystem only
+
+Networking
+└── owns HTTP infrastructure types only
+```
+
+### Benefits
+- Keeps feature modules free of direct infrastructure dependencies.
+- Makes the app composition boundary explicit: the executable assembles live infrastructure.
+- Preserves preview-friendly feature inputs while allowing app-level networking integration.
+- Tightens the `Networking` package to a reusable transport layer instead of a mixed infrastructure grab bag.
+
+### Costs
+- The app layer now owns more composition code and fallback behavior.
+- `LiveCatalogRepository` needs app-owned fixture data or real decoding logic to stay buildable.
+- The architecture still has a live app preview path that compiles the full graph, which is useful for this stage but not ideal for every feature preview.
+
+### Reconsider when
+- A feature truly needs first-class networking control as part of its own domain responsibility.
+- `Networking` starts accumulating auth/session/cache/analytics concerns again.
+- The app-layer repository grows into a large orchestration object instead of a thin adapter.
+
+### Publication candidate
+The failed build caused by referencing `Item.sampleItems` from the app layer was a useful boundary check: it showed how quickly a supposedly internal feature fixture can leak across module lines and force an explicit ownership decision.

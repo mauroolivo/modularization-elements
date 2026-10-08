@@ -1,49 +1,43 @@
 import Foundation
 
-/// A minimal HTTP client simulating real networking infrastructure.
-/// In production, this would handle sessions, retry logic, certificates, etc.
 public actor HTTPClient {
     private let session: URLSession
-    private let baseURL: URL
-    
-    public init(baseURL: URL = URL(string: "https://api.example.com")!, session: URLSession = .shared) {
+
+    public init(session: URLSession = .shared) {
         self.session = session
-        self.baseURL = baseURL
     }
-    
-    public func get<T: Decodable>(path: String) async throws -> T {
-        let url = baseURL.appendingPathComponent(path)
-        let (data, _) = try await session.data(from: url)
-        return try JSONDecoder().decode(T.self, from: data)
-    }
-}
 
-/// Session management - simulates real auth/credential state.
-/// In production, this holds tokens, user context, etc.
-public actor SessionManager {
-    private var isAuthenticated: Bool = false
-    
-    public init() {}
-    
-    public func authenticate(credentials: String) async throws {
-        // Simulates authentication delay
-        try await Task.sleep(for: .milliseconds(100))
-        isAuthenticated = true
-    }
-    
-    public var authenticated: Bool { isAuthenticated }
-}
+    public func send(_ request: HTTPRequest) async throws -> HTTPResponse {
+        let (data, response) = try await session.data(for: request.urlRequest())
 
-/// Analytics tracking - simulates third-party analytics setup.
-/// In production, this would initialize heavy SDKs.
-public actor AnalyticsTracker {
-    private var eventQueue: [String] = []
-    
-    public init() {
-        // Simulates SDK initialization
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw HTTPError.invalidResponse
+        }
+
+        let headers = httpResponse.allHeaderFields.reduce(into: [String: String]()) { partialResult, element in
+            partialResult[String(describing: element.key)] = String(describing: element.value)
+        }
+
+        let http = HTTPResponse(
+            url: httpResponse.url,
+            statusCode: httpResponse.statusCode,
+            headers: headers,
+            body: data
+        )
+
+        guard http.isSuccessful else {
+            throw HTTPError.unacceptableStatusCode(http.statusCode, http.body)
+        }
+
+        return http
     }
-    
-    public func track(event: String) {
-        eventQueue.append(event)
+
+    public func decode<T: Decodable>(
+        _ type: T.Type,
+        from request: HTTPRequest,
+        using decoder: JSONDecoder = JSONDecoder()
+    ) async throws -> T {
+        let response = try await send(request)
+        return try response.decode(T.self, using: decoder)
     }
 }

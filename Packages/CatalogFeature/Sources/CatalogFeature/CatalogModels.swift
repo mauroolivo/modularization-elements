@@ -15,7 +15,7 @@ public struct Item: Identifiable, Hashable, Sendable, Codable {
 }
 
 extension Item {
-    public static let sampleItems: [Item] = [
+    static let sampleItems: [Item] = [
         Item(id: UUID(), name: "Canvas Tote", subtitle: "Everyday carry", price: "$49"),
         Item(id: UUID(), name: "Desk Lamp", subtitle: "Warm ambient light", price: "$79"),
         Item(id: UUID(), name: "Ceramic Mug", subtitle: "Matte finish", price: "$24")
