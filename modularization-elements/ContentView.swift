@@ -1,25 +1,20 @@
+//
+
 import SwiftUI
 import CatalogFeature
-import Networking
 
 struct ContentView: View {
-    /// App layer creates infrastructure and passes it to features via lightweight inputs
-    private let catalogInput: CatalogInput
-    
-    init() {
-        // App layer: assemble infrastructure
-        let httpClient = HTTPClient()
-        let repository = LiveCatalogRepository(httpClient: httpClient)
-        
-        // App layer: wrap in feature input
-        self.catalogInput = CatalogInput(repository: repository)
+    private let input: CatalogInput
+
+    init(input: CatalogInput) {
+        self.input = input
     }
-    
+
     var body: some View {
-        CatalogView(input: catalogInput)
+        CatalogView(input: input)
     }
 }
 
 #Preview {
-    ContentView()
+    ContentView(input: .default)
 }

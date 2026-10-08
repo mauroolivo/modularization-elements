@@ -6,7 +6,7 @@ import SwiftUI
 struct modularization_elementsApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(input: AppComposition.catalogInput())
         }
     }
 }

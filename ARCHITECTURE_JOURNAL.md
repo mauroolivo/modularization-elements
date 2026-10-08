@@ -418,3 +418,47 @@ What the comparison showed:
 
 ### Publication candidate
 "Dependency inversion is not free" — the direct `CatalogViewDirect` preview demonstrates how a seemingly simpler feature-to-networking coupling shifts complexity into preview setup and test isolation. This is a useful counterpoint to blanket abstraction advice.
+
+## Finding
+
+### Context
+Stage 9 moved from comparing dependency shapes to defining the app as the composition boundary.
+
+### Decision / observation
+The app target now owns the live assembly path explicitly:
+- `modularization_elementsApp` creates the window group with `ContentView(input: AppComposition.catalogInput())`
+- `AppComposition` lives in the app target and constructs `HTTPClient`, `LiveCatalogRepository`, and `CatalogInput`
+- `ContentView` is now input-driven and no longer responsible for choosing mock vs live wiring
+- `CatalogFeature` remains unaware of app-specific composition details
+
+Current ownership split:
+```text
+App target
+├── app entry point
+├── composition root (`AppComposition`)
+├── live repository implementation (`LiveCatalogRepository`)
+└── feature injection (`ContentView(input:)`)
+
+CatalogFeature
+├── feature UI/state/contracts
+└── no app composition knowledge
+```
+
+### Benefits
+- Makes dependency definition, implementation, and composition distinct concepts.
+- Keeps the app thin while still making it the place where live implementations are assembled.
+- Removes the ambiguity of a view quietly deciding whether it should be mock or live.
+- Gives us a single place to inspect live infrastructure wiring.
+
+### Costs
+- One more explicit composition type to maintain.
+- The app target still carries the responsibility of wiring feature inputs correctly.
+- The current composition root is simple; it could become another orchestration layer if it starts accumulating too many responsibilities.
+
+### Reconsider when
+- Composition grows into a large, unstructured factory surface.
+- The app target starts containing business logic rather than wiring.
+- Feature setup becomes repetitive enough that a dedicated composition helper per flow would be clearer.
+
+### Publication candidate
+A thin `AppComposition` is a practical teaching example of the difference between “the app owns assembly” and “the app target should be empty.” The refactor shows that the app can stay thin without pretending it has no responsibilities.
