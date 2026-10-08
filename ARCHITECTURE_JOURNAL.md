@@ -611,3 +611,70 @@ The app layer handles these actions, updates shared state, and switches tabs whe
 
 ### Publication candidate
 Showing the same user flow split into feature-local navigation plus app-level orchestration is a strong example that "features should not import each other to navigate" can be enforced with lightweight output actions.
+
+
+## Finding
+
+### Context
+Stage 13 evaluated package count vs target count using the current app graph and the existing `ModuleBoundaryLab` experiment.
+
+### Decision / observation
+In the app graph we currently use a one-package-per-module shape (`CatalogFeature`, `FavoritesFeature`, `DesignSystem`, `ItemDomain`, `Networking`), each exposing one library target.
+
+We compared that with the multi-target-in-one-package pattern already present in `ModuleBoundaryLab`:
+
+- `BoundarySupport` and `BoundaryKit` are separate targets inside one package.
+- They can use `package` access to share APIs within the same package boundary.
+- External clients only consume the exported product (`BoundaryKit`).
+
+This confirms package count and target count are separate decisions.
+
+### Benefits
+- Separate packages make boundaries explicit and ownership easy to read.
+- Multi-target packages reduce manifest sprawl and can leverage `package` access intentionally.
+- Product-level curation still controls what external consumers can import.
+
+### Costs
+- One package per module increases manifest/dependency declaration overhead.
+- Multi-target packages can hide coupling if boundaries are not still treated intentionally.
+
+### Reconsider when
+- Multiple modules are always versioned and evolved together.
+- We need `package` access across closely related targets.
+- Manifest churn starts outweighing boundary clarity.
+
+### Publication candidate
+A side-by-side of current one-target packages versus `ModuleBoundaryLab`'s multi-target package is a concrete demonstration that packaging and modular boundaries should be decided independently.
+
+
+## Finding
+
+### Context
+Stage 14 introduced module-level tests for `CatalogFeature`, `FavoritesFeature`, and `Networking` to validate behavior without building the executable app target.
+
+### Decision / observation
+We added dedicated SwiftPM test targets in each package and kept test doubles local to each module's tests.
+
+Coverage added:
+
+- `CatalogFeatureTests`: verifies `CatalogInput` action forwarding and repository access.
+- `FavoritesFeatureTests`: verifies `FavoritesInput` data/action wiring.
+- `NetworkingTests`: verifies `HTTPClient.send` success/error behavior and `decode` path using a URLProtocol stub.
+
+Tests run via `swift test` inside each package, confirming independent module testability.
+
+### Benefits
+- Important behavior is validated at module scope, not only through app integration.
+- Feature tests stay deterministic by using local fixtures/doubles.
+- Networking behavior is tested without hitting real network endpoints.
+
+### Costs
+- Added test-target/manifest maintenance per package.
+- Some test helpers need explicit concurrency handling under Swift 6 (`nonisolated(unsafe)` for stub shared state).
+
+### Reconsider when
+- Cross-package test fixture duplication grows enough to justify a focused support target.
+- A shared test-support module starts becoming generic dumping ground instead of targeted utility.
+
+### Publication candidate
+A concrete demonstration that `swift test` at package scope catches behavior and dependency issues without compiling the full app graph is useful evidence for modular testing strategy.

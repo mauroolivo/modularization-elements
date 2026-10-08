@@ -24,6 +24,13 @@ let package = Package(
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "ItemDomain", package: "ItemDomain"),
             ]
+        ),
+        .testTarget(
+            name: "CatalogFeatureTests",
+            dependencies: [
+                "CatalogFeature",
+                .product(name: "ItemDomain", package: "ItemDomain")
+            ]
         )
     ]
 )
