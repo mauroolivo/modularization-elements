@@ -12,6 +12,7 @@
         34D6BE0930750A3900FEB40E /* FavoritesFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 34D6BE0B30750A3900FEB40E /* FavoritesFeature */; };
         34D6BE0C30750A3900FEB40E /* ItemDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 34D6BE0D30750A3900FEB40E /* ItemDomain */; };
         34D6BE0730750A3900FEB40E /* Networking in Frameworks */ = {isa = PBXBuildFile; productRef = 34D6BE0630750A3900FEB40E /* Networking */; };
+            34D6BE1230750A3900FEB40E /* AnalyticsLive in Frameworks */ = {isa = PBXBuildFile; productRef = 34D6BE1130750A3900FEB40E /* AnalyticsLive */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +37,7 @@
                 34D6BE0930750A3900FEB40E /* FavoritesFeature in Frameworks */,
                 34D6BE0C30750A3900FEB40E /* ItemDomain in Frameworks */,
                 34D6BE0730750A3900FEB40E /* Networking in Frameworks */,
+                34D6BE1230750A3900FEB40E /* AnalyticsLive in Frameworks */,
             );
         };
 /* End PBXFrameworksBuildPhase section */
@@ -81,6 +83,7 @@
                 34D6BE0B30750A3900FEB40E /* FavoritesFeature */,
                 34D6BE0D30750A3900FEB40E /* ItemDomain */,
                 34D6BE0630750A3900FEB40E /* Networking */,
+                    34D6BE1130750A3900FEB40E /* AnalyticsLive */,
             );
             productName = "modularization-elements";
             productReference = 34D6BDE230750A3900FEB40E /* modularization-elements.app */;
@@ -116,6 +119,7 @@
                     34D6BE0A30750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/FavoritesFeature" */,
                 34D6BE0E30750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/ItemDomain" */,
                 34D6BE0830750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/Networking" */,
+                    34D6BE1030750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/AnalyticsLive" */,
             );
             preferredProjectObjectVersion = 77;
             productRefGroup = 34D6BDE330750A3900FEB40E /* Products */;
@@ -371,6 +375,10 @@
             isa = XCLocalSwiftPackageReference;
             relativePath = Packages/Networking;
         };
+            34D6BE1030750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/AnalyticsLive" */ = {
+              isa = XCLocalSwiftPackageReference;
+              relativePath = Packages/AnalyticsLive;
+            };
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -399,6 +407,11 @@
             package = 34D6BE0830750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/Networking" */;
             productName = Networking;
         };
+            34D6BE1130750A3900FEB40E /* AnalyticsLive */ = {
+              isa = XCSwiftPackageProductDependency;
+              package = 34D6BE1030750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/AnalyticsLive" */;
+              productName = AnalyticsLive;
+            };
 /* End XCSwiftPackageProductDependency section */
     };
     rootObject = 34D6BDDA30750A3900FEB40E /* Project object */;

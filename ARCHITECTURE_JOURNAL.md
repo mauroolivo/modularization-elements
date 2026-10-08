@@ -1168,3 +1168,44 @@ This keeps the app graph healthy while still making Stage 16 executable and revi
 
 ### Publication candidate
 A safe "stress-lab" package is a practical way to teach anti-pattern diagnosis in modular systems: you can exercise harmful patterns, validate fixes, and capture detection rules without destabilizing the production dependency graph.
+
+## Finding
+
+### Context
+Stage 17 focused on third-party dependency containment by introducing analytics while preserving feature boundaries and preview/test ergonomics.
+
+### Decision / observation
+We introduced a two-layer analytics boundary and kept SDK imports out of feature modules:
+
+- `AnalyticsAPI` exposes `AnalyticsTracking`, `AnalyticsEvent`, and `NoopAnalyticsTracker`.
+- `CatalogFeature` depends only on `AnalyticsAPI` and emits events from `CatalogView`.
+- `AnalyticsLive` contains `LiveAnalyticsTracker` plus a simulated `ThirdPartyAnalyticsSDK` target.
+- The app composition root (`AppComposition`) creates `LiveAnalyticsTracker` and injects it through `CatalogInput`.
+
+Resulting direction:
+
+```text
+CatalogFeature -> AnalyticsAPI
+AppComposition -> AnalyticsLive -> ThirdPartyAnalyticsSDK
+```
+
+This keeps third-party imports contained to one implementation module and leaves features dependent on a small abstraction.
+
+### Benefits
+- Prevents third-party SDK leakage into feature packages.
+- Preserves feature previews/tests via `NoopAnalyticsTracker` default injection.
+- Reduces replacement cost: SDK swap is localized to `AnalyticsLive`.
+- Keeps dependency graph explicit and reviewable at the composition root.
+
+### Costs
+- Adds two packages and one more abstraction boundary to maintain.
+- Requires app-level wiring discipline so live tracker is injected in production.
+- Adds small boilerplate for event modeling and adapters.
+
+### Reconsider when
+- A single feature is the only analytics consumer and abstraction cost outweighs benefit.
+- Analytics event schema becomes volatile enough that a shared API module churns too often.
+- Binary SDK constraints (size/startup/build integration) demand additional packaging tactics.
+
+### Publication candidate
+A practical containment pattern (`Feature -> API`, `App -> Live -> SDK`) that demonstrates how to keep heavy third-party dependencies from spreading through feature modules while preserving previews and tests.

@@ -16,6 +16,7 @@ let package = Package(
     dependencies: [
         .package(path: "../DesignSystem"),
         .package(path: "../ItemDomain"),
+        .package(path: "../AnalyticsAPI"),
     ],
     targets: [
         .target(
@@ -23,6 +24,7 @@ let package = Package(
             dependencies: [
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "ItemDomain", package: "ItemDomain"),
+                .product(name: "AnalyticsAPI", package: "AnalyticsAPI"),
             ]
         ),
         .testTarget(

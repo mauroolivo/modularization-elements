@@ -1,5 +1,6 @@
 import CatalogFeature
 import FavoritesFeature
+import AnalyticsLive
 import Networking
 
 /// App composition root for the catalog flow.
@@ -9,7 +10,8 @@ enum AppComposition {
     static func catalogInput() -> CatalogInput {
         let httpClient = HTTPClient()
         let repository = LiveCatalogRepository(httpClient: httpClient)
-        return CatalogInput(repository: repository)
+        let analytics = LiveAnalyticsTracker()
+        return CatalogInput(repository: repository, analytics: analytics)
     }
 
     static func favoritesInput() -> FavoritesInput {

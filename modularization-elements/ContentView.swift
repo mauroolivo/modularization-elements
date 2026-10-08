@@ -13,11 +13,11 @@ struct ContentView: View {
 
     @State private var selectedTab: Tab = .catalog
     @State private var favorites: [Item]
-    private let catalogRepository: CatalogRepository
+    private let baseCatalogInput: CatalogInput
 
     init(catalogInput: CatalogInput, favoritesInput: FavoritesInput) {
         _favorites = State(initialValue: favoritesInput.items)
-        self.catalogRepository = catalogInput.repository
+        self.baseCatalogInput = catalogInput
     }
 
     var body: some View {
@@ -37,7 +37,7 @@ struct ContentView: View {
     }
 
     private var catalogFeatureInput: CatalogInput {
-        CatalogInput(repository: catalogRepository) { action in
+        CatalogInput(repository: baseCatalogInput.repository, analytics: baseCatalogInput.analytics) { action in
             switch action {
             case let .addToFavorites(item):
                 addToFavorites(item)

@@ -1,4 +1,5 @@
 import SwiftUI
+import AnalyticsAPI
 import DesignSystem
 import ItemDomain
 
@@ -13,6 +14,7 @@ public struct CatalogView: View {
     @State private var state: CatalogState
     @State private var selectedItem: Item?
     private let repository: CatalogRepository
+    private let analytics: any AnalyticsTracking
     private let onAction: (CatalogAction) -> Void
 
     /// Public initializer accepts explicit CatalogInput
@@ -20,6 +22,7 @@ public struct CatalogView: View {
         self.init(
             initialState: .idle,
             repository: input.repository,
+            analytics: input.analytics,
             onAction: input.onAction
         )
     }
@@ -28,10 +31,12 @@ public struct CatalogView: View {
     init(
         initialState: CatalogState,
         repository: CatalogRepository = MockCatalogRepository(),
+        analytics: any AnalyticsTracking = NoopAnalyticsTracker(),
         onAction: @escaping (CatalogAction) -> Void = { _ in }
     ) {
         _state = State(initialValue: initialState)
         self.repository = repository
+        self.analytics = analytics
         self.onAction = onAction
     }
 
@@ -104,8 +109,10 @@ public struct CatalogView: View {
 
         do {
             let items = try await repository.fetchItems()
+            analytics.track(AnalyticsEvent(name: "catalog_loaded", properties: ["item_count": "\(items.count)"]))
             state = .loaded(items)
         } catch {
+            analytics.track(AnalyticsEvent(name: "catalog_load_failed", properties: ["message": error.localizedDescription]))
             state = .error(error.localizedDescription)
         }
     }
@@ -115,6 +122,7 @@ public struct CatalogView: View {
     }
 
     private func favoriteSelected(_ item: Item) {
+        analytics.track(AnalyticsEvent(name: "catalog_favorite_tapped", properties: ["item_id": item.id.uuidString]))
         onAction(.addToFavorites(item))
     }
 }

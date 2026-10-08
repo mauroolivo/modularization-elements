@@ -1,4 +1,5 @@
 import Foundation
+import AnalyticsAPI
 import ItemDomain
 
 public enum CatalogAction {
@@ -10,13 +11,16 @@ public enum CatalogAction {
 /// Separates preview concerns from production assembly.
 public struct CatalogInput {
     public let repository: CatalogRepository
+    public let analytics: any AnalyticsTracking
     public let onAction: (CatalogAction) -> Void
     
     public init(
         repository: CatalogRepository,
+        analytics: any AnalyticsTracking = NoopAnalyticsTracker(),
         onAction: @escaping (CatalogAction) -> Void = { _ in }
     ) {
         self.repository = repository
+        self.analytics = analytics
         self.onAction = onAction
     }
     
