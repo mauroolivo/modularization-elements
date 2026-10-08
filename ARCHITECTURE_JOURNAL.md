@@ -535,3 +535,44 @@ App
 
 ### Publication candidate
 Introducing the second feature before creating a shared domain module is a useful teaching step: it shows when sharing looks convenient, and when it starts signaling a real domain boundary.
+
+
+## Finding
+
+### Context
+Stage 11 extracted `ItemDomain` as a focused shared-domain module for `Item`.
+
+### Decision / observation
+We moved `Item` from `CatalogFeature` into a new package/target: `ItemDomain`.
+
+Updated dependency shape:
+
+```text
+ItemDomain
+  |- CatalogFeature
+  `- FavoritesFeature
+
+App
+  |- CatalogFeature
+  |- FavoritesFeature
+  |- ItemDomain
+  `- Networking
+```
+
+`FavoritesFeature` no longer imports `CatalogFeature` for shared model access. Both features now import `ItemDomain` directly.
+
+### Benefits
+- Shared model ownership is explicit and not hidden inside a feature module.
+- Removes accidental feature-to-feature model coupling.
+- Makes future shared-domain evolution discussable as a first-class boundary.
+
+### Costs
+- Adds one more package/target and dependency edge to maintain.
+- `ItemDomain` now has fan-in from multiple features, so API changes can trigger broader rebuilds.
+
+### Reconsider when
+- `Item` diverges semantically across features (duplication may become cheaper than coupling).
+- `ItemDomain` starts collecting unrelated types and trends toward a dumping-ground shared module.
+
+### Publication candidate
+A practical before/after showing `FavoritesFeature -> CatalogFeature` replaced by `FavoritesFeature -> ItemDomain` is a concrete demonstration of when a shared-domain extraction is justified.

@@ -1,5 +1,6 @@
 import Foundation
 import CatalogFeature
+import ItemDomain
 import Networking
 
 /// Production implementation of CatalogRepository

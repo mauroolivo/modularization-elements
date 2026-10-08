@@ -1,4 +1,5 @@
 import Foundation
+import ItemDomain
 
 /// SOLUTION: Lightweight feature input model.
 /// Encapsulates exactly what the feature UI needs, not production infrastructure.

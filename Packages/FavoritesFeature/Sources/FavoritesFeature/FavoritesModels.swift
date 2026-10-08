@@ -1,5 +1,5 @@
 import Foundation
-import CatalogFeature
+import ItemDomain
 
 public struct FavoritesInput {
     let items: [Item]

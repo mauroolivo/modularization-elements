@@ -1,5 +1,6 @@
 import SwiftUI
 import DesignSystem
+import ItemDomain
 
 /// Refactored CatalogView using lightweight CatalogInput dependency.
 /// The view only needs access to a repository, expressed via CatalogInput.

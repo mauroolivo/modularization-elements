@@ -10,6 +10,7 @@
         34D6BE0230750A3900FEB40E /* DesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 34D6BE0130750A3900FEB40E /* DesignSystem */; };
         34D6BE0330750A3900FEB40E /* CatalogFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 34D6BE0430750A3900FEB40E /* CatalogFeature */; };
         34D6BE0930750A3900FEB40E /* FavoritesFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 34D6BE0B30750A3900FEB40E /* FavoritesFeature */; };
+        34D6BE0C30750A3900FEB40E /* ItemDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 34D6BE0D30750A3900FEB40E /* ItemDomain */; };
         34D6BE0730750A3900FEB40E /* Networking in Frameworks */ = {isa = PBXBuildFile; productRef = 34D6BE0630750A3900FEB40E /* Networking */; };
 /* End PBXBuildFile section */
 
@@ -33,6 +34,7 @@
                 34D6BE0230750A3900FEB40E /* DesignSystem in Frameworks */,
                 34D6BE0330750A3900FEB40E /* CatalogFeature in Frameworks */,
                 34D6BE0930750A3900FEB40E /* FavoritesFeature in Frameworks */,
+                34D6BE0C30750A3900FEB40E /* ItemDomain in Frameworks */,
                 34D6BE0730750A3900FEB40E /* Networking in Frameworks */,
             );
         };
@@ -77,6 +79,7 @@
                 34D6BE0130750A3900FEB40E /* DesignSystem */,
                 34D6BE0430750A3900FEB40E /* CatalogFeature */,
                 34D6BE0B30750A3900FEB40E /* FavoritesFeature */,
+                34D6BE0D30750A3900FEB40E /* ItemDomain */,
                 34D6BE0630750A3900FEB40E /* Networking */,
             );
             productName = "modularization-elements";
@@ -111,6 +114,7 @@
                 34D6BE0030750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/DesignSystem" */,
                 34D6BE0530750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/CatalogFeature" */,
                     34D6BE0A30750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/FavoritesFeature" */,
+                34D6BE0E30750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/ItemDomain" */,
                 34D6BE0830750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/Networking" */,
             );
             preferredProjectObjectVersion = 77;
@@ -359,6 +363,10 @@
             isa = XCLocalSwiftPackageReference;
             relativePath = Packages/FavoritesFeature;
         };
+        34D6BE0E30750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/ItemDomain" */ = {
+            isa = XCLocalSwiftPackageReference;
+            relativePath = Packages/ItemDomain;
+        };
         34D6BE0830750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/Networking" */ = {
             isa = XCLocalSwiftPackageReference;
             relativePath = Packages/Networking;
@@ -380,6 +388,11 @@
             isa = XCSwiftPackageProductDependency;
             package = 34D6BE0A30750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/FavoritesFeature" */;
             productName = FavoritesFeature;
+        };
+        34D6BE0D30750A3900FEB40E /* ItemDomain */ = {
+            isa = XCSwiftPackageProductDependency;
+            package = 34D6BE0E30750A3900FEB40E /* XCLocalSwiftPackageReference "Packages/ItemDomain" */;
+            productName = ItemDomain;
         };
         34D6BE0630750A3900FEB40E /* Networking */ = {
             isa = XCSwiftPackageProductDependency;

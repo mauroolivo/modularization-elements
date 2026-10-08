@@ -1,6 +1,6 @@
 import SwiftUI
-import CatalogFeature
 import DesignSystem
+import ItemDomain
 
 public struct FavoritesView: View {
     @State private var items: [Item]

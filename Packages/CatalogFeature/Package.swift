@@ -15,12 +15,14 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../DesignSystem"),
+        .package(path: "../ItemDomain"),
     ],
     targets: [
         .target(
             name: "CatalogFeature",
             dependencies: [
                 .product(name: "DesignSystem", package: "DesignSystem"),
+                .product(name: "ItemDomain", package: "ItemDomain"),
             ]
         )
     ]
