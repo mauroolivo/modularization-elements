@@ -373,3 +373,48 @@ Networking
 
 ### Publication candidate
 The failed build caused by referencing `Item.sampleItems` from the app layer was a useful boundary check: it showed how quickly a supposedly internal feature fixture can leak across module lines and force an explicit ownership decision.
+
+## Finding
+
+### Context
+Stage 8 compared two dependency structures for the catalog screen:
+1. `CatalogFeature → Networking` directly
+2. `CatalogFeature → CatalogRepository` with the app composing `LiveCatalogRepository → Networking`
+
+### Decision / observation
+The codebase now contains both shapes for comparison:
+- `CatalogView` continues to use the lightweight `CatalogInput` / `CatalogRepository` boundary.
+- `CatalogViewDirect` was added as an alternative that imports `Networking` and talks to `HTTPClient` directly.
+- `CatalogViewDirect` needed extra preview machinery (`URLProtocol` + session fixture) to stay deterministic in previews.
+- The app still uses the inverted path for its actual composition (`ContentView` → `CatalogView`), while the direct version remains an experiment inside the feature package.
+
+What the comparison showed:
+- Direct dependency path:
+  - fewer types and less composition code
+  - feature owns its transport dependency explicitly
+  - previews require a custom transport harness instead of a simple fixture object
+  - feature API now knows about HTTP concerns
+- Repository inversion path:
+  - one extra abstraction and a live repository type
+  - app owns composition and infrastructure wiring
+  - preview setup stays simpler and more domain-shaped
+  - feature stays reusable without transport knowledge
+
+### Benefits
+- Makes the trade-off tangible instead of theoretical.
+- Shows that direct dependency can be simpler locally but more expensive for previews and test seams.
+- Confirms that dependency inversion is justified here mainly by composition/preview ownership, not by generic doctrine.
+- Keeps the feature module honest about what it owns versus what the app assembles.
+
+### Costs
+- Two parallel entry points now exist in the feature package, which adds some learning noise.
+- The direct preview path needs `URLProtocol` plumbing and `HTTPClient` setup.
+- The feature package still carries a `Networking` dependency because of the direct experiment, even though the app does not need it for the main path.
+
+### Reconsider when
+- A feature is truly transport-oriented and the transport dependency is part of its core responsibility.
+- The repository abstraction starts mirroring `HTTPClient` too closely and becomes meaningless.
+- Preview or testing needs become so simple that the extra abstraction is no longer pulling its weight.
+
+### Publication candidate
+"Dependency inversion is not free" — the direct `CatalogViewDirect` preview demonstrates how a seemingly simpler feature-to-networking coupling shifts complexity into preview setup and test isolation. This is a useful counterpoint to blanket abstraction advice.
