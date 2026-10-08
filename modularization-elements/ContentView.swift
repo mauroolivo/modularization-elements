@@ -3,28 +3,61 @@
 import SwiftUI
 import CatalogFeature
 import FavoritesFeature
+import ItemDomain
 
 struct ContentView: View {
-    private let catalogInput: CatalogInput
-    private let favoritesInput: FavoritesInput
+    private enum Tab: Hashable {
+        case catalog
+        case favorites
+    }
+
+    @State private var selectedTab: Tab = .catalog
+    @State private var favorites: [Item]
+    private let catalogRepository: CatalogRepository
 
     init(catalogInput: CatalogInput, favoritesInput: FavoritesInput) {
-        self.catalogInput = catalogInput
-        self.favoritesInput = favoritesInput
+        _favorites = State(initialValue: favoritesInput.items)
+        self.catalogRepository = catalogInput.repository
     }
 
     var body: some View {
-        TabView {
-            CatalogView(input: catalogInput)
+        TabView(selection: $selectedTab) {
+            CatalogView(input: catalogFeatureInput)
                 .tabItem {
                     Label("Catalog", systemImage: "square.grid.2x2")
                 }
+                .tag(Tab.catalog)
 
-            FavoritesView(input: favoritesInput)
+            FavoritesView(input: favoritesFeatureInput)
                 .tabItem {
                     Label("Favorites", systemImage: "heart")
                 }
+                .tag(Tab.favorites)
         }
+    }
+
+    private var catalogFeatureInput: CatalogInput {
+        CatalogInput(repository: catalogRepository) { action in
+            switch action {
+            case let .addToFavorites(item):
+                addToFavorites(item)
+                selectedTab = .favorites
+            }
+        }
+    }
+
+    private var favoritesFeatureInput: FavoritesInput {
+        FavoritesInput(items: favorites) { action in
+            switch action {
+            case let .removeFromFavorites(item):
+                favorites.removeAll { $0.id == item.id }
+            }
+        }
+    }
+
+    private func addToFavorites(_ item: Item) {
+        guard favorites.contains(where: { $0.id == item.id }) == false else { return }
+        favorites.append(item)
     }
 }
 

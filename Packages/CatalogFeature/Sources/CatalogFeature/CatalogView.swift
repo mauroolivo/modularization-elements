@@ -11,20 +11,28 @@ import ItemDomain
 /// - Production infrastructure assembly (lives in app layer)
 public struct CatalogView: View {
     @State private var state: CatalogState
+    @State private var selectedItem: Item?
     private let repository: CatalogRepository
+    private let onAction: (CatalogAction) -> Void
 
     /// Public initializer accepts explicit CatalogInput
     public init(input: CatalogInput) {
-        self.init(initialState: .idle, repository: input.repository)
+        self.init(
+            initialState: .idle,
+            repository: input.repository,
+            onAction: input.onAction
+        )
     }
 
     /// Internal initializer for preview state overrides
     init(
         initialState: CatalogState,
-        repository: CatalogRepository = MockCatalogRepository()
+        repository: CatalogRepository = MockCatalogRepository(),
+        onAction: @escaping (CatalogAction) -> Void = { _ in }
     ) {
         _state = State(initialValue: initialState)
         self.repository = repository
+        self.onAction = onAction
     }
 
     public var body: some View {
@@ -48,7 +56,12 @@ public struct CatalogView: View {
                                         .font(.footnote)
                                         .foregroundStyle(.tertiary)
                                     Spacer()
-                                    AppButton("Favorite") {}
+                                    AppButton("Details") {
+                                        selectedItem = item
+                                    }
+                                    AppButton("Favorite") {
+                                        onAction(.addToFavorites(item))
+                                    }
                                 }
                             }
                         }
@@ -78,6 +91,9 @@ public struct CatalogView: View {
         .task {
             await loadIfNeeded()
         }
+        .sheet(item: $selectedItem) { item in
+            CatalogItemDetailView(item: item)
+        }
     }
 
     @MainActor
@@ -96,6 +112,28 @@ public struct CatalogView: View {
 
     private func badgeText(for item: Item) -> String {
         "Featured: \(item.name)"
+    }
+}
+
+private struct CatalogItemDetailView: View {
+    let item: Item
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: AppSpacing.small) {
+                Text(item.name)
+                    .font(.title2)
+                    .bold()
+                Text(item.subtitle)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                Text(item.price)
+                    .font(.headline)
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Item Details")
+        }
     }
 }
 

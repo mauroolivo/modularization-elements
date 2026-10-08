@@ -576,3 +576,38 @@ App
 
 ### Publication candidate
 A practical before/after showing `FavoritesFeature -> CatalogFeature` replaced by `FavoritesFeature -> ItemDomain` is a concrete demonstration of when a shared-domain extraction is justified.
+
+
+## Finding
+
+### Context
+Stage 12 introduced cross-feature communication and navigation pressure: add from Catalog into Favorites, while keeping feature modules independent.
+
+### Decision / observation
+We split navigation ownership into two layers:
+
+- Feature-local navigation remains inside each feature (`CatalogView` and `FavoritesView` present local item detail sheets).
+- Application-level coordination happens in the app target (`ContentView` owns favorites state and tab selection).
+
+Feature modules emit actions through input callbacks:
+
+- `CatalogAction.addToFavorites(Item)`
+- `FavoritesAction.removeFromFavorites(Item)`
+
+The app layer handles these actions, updates shared state, and switches tabs when useful.
+
+### Benefits
+- Avoids feature-to-feature imports for cross-feature workflows.
+- Keeps features previewable with deterministic inputs.
+- Makes application orchestration explicit and testable at composition level.
+
+### Costs
+- Input models gain callback surface area that must be maintained.
+- App composition/state handling becomes more complex as flows grow.
+
+### Reconsider when
+- App-level action handling turns into a large unstructured switchboard.
+- A shared flow appears in many features and needs a more structured coordinator boundary.
+
+### Publication candidate
+Showing the same user flow split into feature-local navigation plus app-level orchestration is a strong example that "features should not import each other to navigate" can be enforced with lightweight output actions.

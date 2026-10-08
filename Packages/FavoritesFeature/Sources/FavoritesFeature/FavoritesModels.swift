@@ -1,11 +1,20 @@
 import Foundation
 import ItemDomain
 
-public struct FavoritesInput {
-    let items: [Item]
+public enum FavoritesAction {
+    case removeFromFavorites(Item)
+}
 
-    public init(items: [Item]) {
+public struct FavoritesInput {
+    public let items: [Item]
+    public let onAction: (FavoritesAction) -> Void
+
+    public init(
+        items: [Item],
+        onAction: @escaping (FavoritesAction) -> Void = { _ in }
+    ) {
         self.items = items
+        self.onAction = onAction
     }
 
     public static var `default`: FavoritesInput {

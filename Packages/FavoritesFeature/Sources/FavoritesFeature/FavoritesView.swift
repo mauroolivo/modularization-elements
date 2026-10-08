@@ -3,16 +3,17 @@ import DesignSystem
 import ItemDomain
 
 public struct FavoritesView: View {
-    @State private var items: [Item]
+    @State private var selectedItem: Item?
+    private let input: FavoritesInput
 
     public init(input: FavoritesInput) {
-        _items = State(initialValue: input.items)
+        self.input = input
     }
 
     public var body: some View {
         NavigationStack {
             Group {
-                if items.isEmpty {
+                if input.items.isEmpty {
                     emptyState
                 } else {
                     favoritesList
@@ -20,10 +21,13 @@ public struct FavoritesView: View {
             }
             .navigationTitle("Favorites")
         }
+        .sheet(item: $selectedItem) { item in
+            FavoriteItemDetailView(item: item)
+        }
     }
 
     private var favoritesList: some View {
-        List(items) { item in
+        List(input.items) { item in
             Card {
                 VStack(alignment: .leading, spacing: AppSpacing.xxSmall) {
                     Text(item.name)
@@ -36,8 +40,11 @@ public struct FavoritesView: View {
                             .font(.footnote)
                             .foregroundStyle(.tertiary)
                         Spacer()
+                        AppButton("Details") {
+                            selectedItem = item
+                        }
                         AppButton("Remove") {
-                            remove(item)
+                            input.onAction(.removeFromFavorites(item))
                         }
                     }
                 }
@@ -56,9 +63,27 @@ public struct FavoritesView: View {
             description: Text("Saved items will appear here.")
         )
     }
+}
 
-    private func remove(_ item: Item) {
-        items.removeAll { $0.id == item.id }
+private struct FavoriteItemDetailView: View {
+    let item: Item
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: AppSpacing.small) {
+                Text(item.name)
+                    .font(.title2)
+                    .bold()
+                Text(item.subtitle)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                Text(item.price)
+                    .font(.headline)
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Item Details")
+        }
     }
 }
 
