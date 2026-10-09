@@ -1288,3 +1288,124 @@ To keep the framework boundary clean, we introduced a module-specific public mod
 A useful teaching example for the framework-target path: the first access-control failure is not a nuisance, it is the module boundary telling you that public APIs must own their own shape. That makes Stage 18B a clear contrast with local SPM modularization.
 
 TEST_MARKER
+## Finding
+
+### Context
+Stage 19: production-readiness audit of the current learning laboratory.
+
+### Decision / observation
+The current graph is coherent enough to explain in a sentence per module, and the responsibilities line up with the intended boundary model:
+
+- `modularization-elements` app target: composition root, tab shell, and cross-feature state coordination only.
+- `CatalogFeature`: catalog loading UI, local state, and feature actions.
+- `SearchFeature`: query/filter UI with feature-local actions.
+- `FavoritesFeature`: favorites list UI with remove action and local preview fixtures.
+- `DesignSystem`: reusable SwiftUI primitives and spacing tokens.
+- `ItemDomain`: shared `Item` model and derived domain helpers.
+- `Networking`: HTTP transport and decoding only.
+- `AnalyticsAPI`: analytics contract and no-op implementation.
+- `AnalyticsLive`: concrete bridge to the third-party analytics SDK.
+- `CatalogWidgets`: app-local framework boundary for the widget-style sample UI.
+
+The most important architectural shape is still stable:
+
+```text
+App target
+├── CatalogFeature
+├── SearchFeature
+├── FavoritesFeature
+├── DesignSystem
+├── ItemDomain
+├── Networking
+├── AnalyticsLive
+└── CatalogWidgets
+
+CatalogFeature / SearchFeature / FavoritesFeature
+    ├── DesignSystem
+    └── ItemDomain
+
+AnalyticsLive ──> AnalyticsAPI ──> third-party SDK
+Networking (infrastructure leaf)
+ItemDomain (highest fan-in shared domain)
+DesignSystem (shared UI leaf)
+```
+
+Observed and measured evidence:
+- `xcodebuild build` for the app scheme succeeded on generic iOS.
+- Xcode reported a 19-target dependency graph for the app build.
+- Build timing summary for the successful app build showed the expected late-stage work: `CodeSign (6 tasks) | 0.447 s`, `CopySwiftLibs (1 task) | 0.071 s`, `Copy (3 tasks) | 0.039 s`, `ProcessInfoPlistFile (1 task) | 0.010 s`, `Validate (1 task) | 0.002 s`.
+- Representative module tests all passed: `CatalogFeature` (3), `FavoritesFeature` (2), `SearchFeature` (5), `Networking` (3), `AnalyticsLive` (1), and `AnalyticsAPI` (1).
+
+Observed access-surface shape:
+- The feature packages keep their reusable entry points `public`, while helper state, fixtures, and internal implementation details remain internal or file-private.
+- The app target continues to own cross-feature orchestration instead of importing sibling features into one another.
+- `AnalyticsLive` contains the third-party dependency behind a narrow bridge rather than letting the SDK leak into feature packages.
+
+Inferred risk areas:
+- `ItemDomain` remains the highest fan-in module, so any frequent API churn there would still have the broadest rebuild blast radius.
+- `DesignSystem` is healthy only as long as it stays primitive-focused; feature-specific styling would quickly turn it into another high-cost shared boundary.
+- The app target deployment setting currently tracks the installed toolchain default (`IPHONEOS_DEPLOYMENT_TARGET = 27.0`), while packages pin iOS 17 / macOS 14; that is acceptable for the lab but is a reproducibility concern for a real project unless intentionally pinned.
+
+### Benefits
+- Confirms the repository has a readable modular story rather than just many package names.
+- Shows that the current module count is still explainable and not yet pathological.
+- Demonstrates that feature tests and the app build can run independently enough to support later modularity experiments.
+
+### Costs
+- The app target still has substantial composition responsibility and therefore remains the largest integration surface.
+- Shared modules (`ItemDomain`, `DesignSystem`) continue to deserve caution because they can amplify change.
+- The repository does not yet have a lockfile policy in practice because dependencies are local-path only.
+
+### Reconsider when
+- `ItemDomain` changes frequently enough to slow ordinary feature iteration.
+- `DesignSystem` starts accumulating feature-specific behavior instead of remaining presentational.
+- The app target starts accreting orchestration logic beyond dependency assembly and cross-tab coordination.
+- External package dependencies are introduced and the repository needs a committed `Package.resolved` policy.
+
+### Package.resolved policy
+This repository currently has only local path packages, so there is no committed `Package.resolved` yet.
+
+If remote SwiftPM dependencies are added later:
+- commit `Package.resolved` at the repository root;
+- update it only when `Package.swift` / dependency intent changes;
+- require review for every lockfile diff;
+- keep CI building from the committed lockfile so dependency drift is explicit.
+
+### Publication candidate
+The audit shows a useful real-world nuance: a modular graph can look clean while still hiding important operational issues such as an unpinned app deployment target or an implicit lockfile policy. Those are the kinds of details worth validating before calling a production architecture complete.
+
+## Finding
+
+### Context
+Stage 19: production-readiness audit of the current learning laboratory.
+
+### Decision / observation
+The current graph is coherent enough to explain in a sentence per module, and the responsibilities line up with the intended boundary model.
+
+- App target: composition root, tab shell, and cross-feature coordination only.
+- `CatalogFeature`: catalog loading UI, local state, and feature actions.
+- `SearchFeature`: query/filter UI with feature-local actions.
+- `FavoritesFeature`: favorites list UI with remove action and local fixtures.
+- `DesignSystem`: reusable SwiftUI primitives and spacing tokens.
+- `ItemDomain`: shared `Item` model and derived domain helpers.
+- `Networking`: HTTP transport and decoding only.
+- `AnalyticsAPI`: analytics contract and no-op implementation.
+- `AnalyticsLive`: concrete bridge to the third-party analytics SDK.
+- `CatalogWidgets`: app-local framework boundary for the widget-style sample UI.
+
+Observed evidence:
+- `xcodebuild build` for the app scheme succeeded on generic iOS.
+- Xcode reported a 19-target dependency graph for the app build.
+- Representative package tests passed for `CatalogFeature`, `FavoritesFeature`, `SearchFeature`, `Networking`, `AnalyticsLive`, and `AnalyticsAPI`.
+
+Inferred risk areas:
+- `ItemDomain` remains the highest fan-in module.
+- `DesignSystem` is healthy only while it stays primitive-focused.
+- The app target deployment setting tracks the installed toolchain default, so a production project would want this pinned intentionally.
+
+### Package.resolved policy
+This repository currently has only local path packages, so there is no committed `Package.resolved` yet.
+If remote SwiftPM dependencies are added later, commit `Package.resolved`, review lockfile diffs, and keep CI building from the committed lockfile.
+
+### Publication candidate
+A modular graph can look clean while still hiding operational issues such as an unpinned app deployment target or an implicit lockfile policy.
