@@ -1257,3 +1257,34 @@ The new feature intentionally emits actions (`addToFavorites`) instead of import
 
 ### Publication candidate
 A practical scaling checkpoint: adding one more vertical feature with the same boundary rules quickly reveals whether architecture rules are real or accidental, especially around shared-domain fan-in and feature output ownership.
+
+## Finding
+
+### Context
+Stage 18B compared the local SPM approach with an Xcode framework target by introducing a new `CatalogWidgets` module as a framework-style boundary and wiring it into the app.
+
+### Decision / observation
+We added `CatalogWidgets` as a new target that consumes shared design and domain concepts, then discovered that a public API cannot expose an internal dependency type. The first version tried to publish `[Item]` through `CatalogWidgetsInput`, which triggered Swift access-control errors when `ItemDomain` was not part of the public surface.
+
+To keep the framework boundary clean, we introduced a module-specific public model (`CatalogWidgetItem`) and mapped `Item` into that type at the composition root. That kept the framework API explicit and removed the access-control leak.
+
+### Benefits
+- Shows how an Xcode framework target enforces boundary discipline more visibly than a source-only module setup.
+- Makes API ownership explicit: the module owns the public shape it exports.
+- Separates composition concerns from presentation concerns by mapping domain models into framework-local DTOs.
+- Creates a concrete comparison point for future decisions about local SPM vs target-based modularization.
+
+### Costs
+- Adds conversion code at the app composition layer.
+- Increases the number of types when a shared domain model is not directly exposed.
+- Requires more attention to access control and binary-compatibility warnings when a framework target imports other modules.
+
+### Reconsider when
+- The framework module needs to expose many domain types unchanged and the mapping layer becomes boilerplate.
+- The team wants source-based modularity with fewer access-control constraints.
+- Binary distribution of the framework becomes an actual requirement rather than just a learning exercise.
+
+### Publication candidate
+A useful teaching example for the framework-target path: the first access-control failure is not a nuisance, it is the module boundary telling you that public APIs must own their own shape. That makes Stage 18B a clear contrast with local SPM modularization.
+
+TEST_MARKER

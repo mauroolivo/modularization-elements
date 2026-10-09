@@ -9,7 +9,8 @@ struct modularization_elementsApp: App {
             ContentView(
                 catalogInput: AppComposition.catalogInput(),
                 favoritesInput: AppComposition.favoritesInput(),
-                searchInput: AppComposition.searchInput()
+                searchInput: AppComposition.searchInput(),
+                widgetsInput: AppComposition.widgetsInput()
             )
         }
     }

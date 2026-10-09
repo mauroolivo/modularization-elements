@@ -5,23 +5,27 @@ import CatalogFeature
 import FavoritesFeature
 import SearchFeature
 import ItemDomain
+import CatalogWidgets
 
 struct ContentView: View {
     private enum Tab: Hashable {
         case catalog
         case search
         case favorites
+        case widgets
     }
 
     @State private var selectedTab: Tab = .catalog
     @State private var favorites: [Item]
     private let baseCatalogInput: CatalogInput
     private let baseSearchInput: SearchInput
+    private let widgetsInput: CatalogWidgetsInput
 
-    init(catalogInput: CatalogInput, favoritesInput: FavoritesInput, searchInput: SearchInput) {
+    init(catalogInput: CatalogInput, favoritesInput: FavoritesInput, searchInput: SearchInput, widgetsInput: CatalogWidgetsInput) {
         _favorites = State(initialValue: favoritesInput.items)
         self.baseCatalogInput = catalogInput
         self.baseSearchInput = searchInput
+        self.widgetsInput = widgetsInput
     }
 
     var body: some View {
@@ -43,6 +47,12 @@ struct ContentView: View {
                     Label("Favorites", systemImage: "heart")
                 }
                 .tag(Tab.favorites)
+
+            CatalogWidgetsView(input: widgetsInput)
+                .tabItem {
+                    Label("Widgets", systemImage: "square.grid.3x3.fill")
+                }
+                .tag(Tab.widgets)
         }
     }
 
@@ -86,5 +96,10 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView(catalogInput: .default, favoritesInput: .default, searchInput: .default)
+    ContentView(
+        catalogInput: .default,
+        favoritesInput: .default,
+        searchInput: .default,
+        widgetsInput: AppComposition.widgetsInput()
+    )
 }

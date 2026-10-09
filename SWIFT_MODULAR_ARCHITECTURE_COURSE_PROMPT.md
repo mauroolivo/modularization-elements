@@ -1178,6 +1178,53 @@ At the end, the graph should be understandable without being artificially symmet
 
 ---
 
+# STAGE 18B — Compare Local SPM with an Xcode Framework Target
+
+Before final audit, run one focused experiment on an alternative modularization mechanism.
+
+Create a **new Xcode framework or static library target** (do not replace all existing modules).
+
+Use it as a thin vertical module (for example `RecommendationsFeature` or `CatalogWidgets`) that consumes existing boundaries such as:
+
+```text
+DesignSystem
+ItemDomain
+```
+
+The goal is not product scope. The goal is boundary behavior.
+
+Keep the experiment intentionally small:
+
+- one feature entry point
+- one SwiftUI preview in the target
+- one focused test target for that framework
+- one integration path from the app
+
+Compare this target-based module with your local Swift package modules along dimensions such as:
+
+- dependency declaration ergonomics
+- API/access-control friction
+- preview isolation and setup cost
+- incremental edit/build loop behavior
+- test execution scope and developer workflow
+- ownership/discoverability trade-offs in the repository
+
+If useful, migrate one tiny existing view into the framework target to expose migration friction (imports, resources, visibility, test setup).
+
+Do not optimize for a final hybrid architecture yet.
+
+Extract decision criteria for when to prefer:
+
+```text
+local SPM target
+Xcode framework/static-library target
+hybrid approach
+```
+
+Record findings in `ARCHITECTURE_JOURNAL.md`, and explicitly mark any surprising result as a publication candidate.
+
+---
+
 # STAGE 19 — Production Readiness Audit
 
 Treat the laboratory architecture as though it were being proposed for a real application.
