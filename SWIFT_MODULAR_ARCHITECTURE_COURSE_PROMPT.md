@@ -1209,6 +1209,8 @@ Compare this target-based module with your local Swift package modules along dim
 - test execution scope and developer workflow
 - ownership/discoverability trade-offs in the repository
 
+Comparison note: local SPM modules are source-first and manifest-driven, which usually makes them easier to share, test, and evolve across packages. Xcode framework targets are project-first and target-driven, which makes the module boundary feel more like a traditional app-internal product boundary. Stage 18B should make that ergonomic difference visible, not just theoretical.
+
 If useful, migrate one tiny existing view into the framework target to expose migration friction (imports, resources, visibility, test setup).
 
 Do not optimize for a final hybrid architecture yet.
