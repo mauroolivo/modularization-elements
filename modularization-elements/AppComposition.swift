@@ -1,5 +1,6 @@
 import CatalogFeature
 import FavoritesFeature
+import SearchFeature
 import AnalyticsLive
 import Networking
 
@@ -16,5 +17,9 @@ enum AppComposition {
 
     static func favoritesInput() -> FavoritesInput {
         FavoritesInput.default
+    }
+
+    static func searchInput() -> SearchInput {
+        SearchInput.default
     }
 }

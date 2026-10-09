@@ -8,7 +8,8 @@ struct modularization_elementsApp: App {
         WindowGroup {
             ContentView(
                 catalogInput: AppComposition.catalogInput(),
-                favoritesInput: AppComposition.favoritesInput()
+                favoritesInput: AppComposition.favoritesInput(),
+                searchInput: AppComposition.searchInput()
             )
         }
     }

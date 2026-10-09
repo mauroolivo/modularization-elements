@@ -3,21 +3,25 @@
 import SwiftUI
 import CatalogFeature
 import FavoritesFeature
+import SearchFeature
 import ItemDomain
 
 struct ContentView: View {
     private enum Tab: Hashable {
         case catalog
+        case search
         case favorites
     }
 
     @State private var selectedTab: Tab = .catalog
     @State private var favorites: [Item]
     private let baseCatalogInput: CatalogInput
+    private let baseSearchInput: SearchInput
 
-    init(catalogInput: CatalogInput, favoritesInput: FavoritesInput) {
+    init(catalogInput: CatalogInput, favoritesInput: FavoritesInput, searchInput: SearchInput) {
         _favorites = State(initialValue: favoritesInput.items)
         self.baseCatalogInput = catalogInput
+        self.baseSearchInput = searchInput
     }
 
     var body: some View {
@@ -27,6 +31,12 @@ struct ContentView: View {
                     Label("Catalog", systemImage: "square.grid.2x2")
                 }
                 .tag(Tab.catalog)
+
+            SearchView(input: searchFeatureInput)
+                .tabItem {
+                    Label("Search", systemImage: "magnifyingglass")
+                }
+                .tag(Tab.search)
 
             FavoritesView(input: favoritesFeatureInput)
                 .tabItem {
@@ -55,6 +65,16 @@ struct ContentView: View {
         }
     }
 
+    private var searchFeatureInput: SearchInput {
+        SearchInput(items: baseSearchInput.items) { action in
+            switch action {
+            case let .addToFavorites(item):
+                addToFavorites(item)
+                selectedTab = .favorites
+            }
+        }
+    }
+
     private func addToFavorites(_ item: Item) {
         guard favorites.contains(where: { $0.id == item.id }) == false else { return }
         favorites.append(item)
@@ -62,5 +82,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView(catalogInput: .default, favoritesInput: .default)
+    ContentView(catalogInput: .default, favoritesInput: .default, searchInput: .default)
 }

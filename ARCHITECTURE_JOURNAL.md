@@ -1209,3 +1209,51 @@ This keeps third-party imports contained to one implementation module and leaves
 
 ### Publication candidate
 A practical containment pattern (`Feature -> API`, `App -> Live -> SDK`) that demonstrates how to keep heavy third-party dependencies from spreading through feature modules while preserving previews and tests.
+## Finding
+
+### Context
+Stage 18 scaled the laboratory by introducing one more vertical feature (`SearchFeature`) and testing whether existing boundaries still hold under additional product pressure.
+
+### Decision / observation
+We added `Packages/SearchFeature` with a narrow public API (`SearchView`, `SearchInput`, `SearchAction`) and kept it dependent only on `DesignSystem` and `ItemDomain`.
+
+Current graph after the change:
+
+```text
+App
+├── CatalogFeature
+├── FavoritesFeature
+├── DesignSystem
+├── ItemDomain
+└── Networking
+
+SearchFeature ──┬── DesignSystem
+                └── ItemDomain
+
+CatalogFeature ──┬── DesignSystem
+                 └── ItemDomain
+
+FavoritesFeature ──┬── DesignSystem
+                   └── ItemDomain
+```
+
+The new feature intentionally emits actions (`addToFavorites`) instead of importing sibling features or app navigation types. This keeps cross-feature coordination at app composition level and prevents feature-to-feature coupling.
+
+### Benefits
+- Validates that adding a third vertical feature does not require changing existing feature internals.
+- Reinforces a reusable feature contract pattern (`Input` + `Action`) without protocol explosion.
+- Keeps infrastructure concerns out of feature modules: no networking/persistence/analytics setup inside `SearchFeature`.
+- Makes fan-in pressure on `ItemDomain` explicit with a real additional consumer.
+
+### Costs
+- Adds one more package manifest and test target to maintain.
+- Increases the number of modules impacted by future `ItemDomain` API changes.
+- Introduces another feature surface that must stay disciplined to avoid leaking app-level workflow details.
+
+### Reconsider when
+- Search behavior requires live backend ranking/filtering logic (may justify a search-specific repository boundary).
+- `ItemDomain` churn becomes frequent enough that a shared type split or anti-corruption mapping is cheaper.
+- Feature action contracts begin to duplicate orchestration concerns better owned by a dedicated app-level coordinator.
+
+### Publication candidate
+A practical scaling checkpoint: adding one more vertical feature with the same boundary rules quickly reveals whether architecture rules are real or accidental, especially around shared-domain fan-in and feature output ownership.
