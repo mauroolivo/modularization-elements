@@ -14,6 +14,10 @@ public struct SearchView: View {
         SearchFiltering.filter(input.items, by: query)
     }
 
+    private var favoriteItemIDs: Set<UUID> {
+        Set(input.favoriteItems.map(\.id))
+    }
+
     public var body: some View {
         NavigationStack {
             VStack(spacing: AppSpacing.small) {
@@ -41,9 +45,10 @@ public struct SearchView: View {
                                         .font(.footnote)
                                         .foregroundStyle(.tertiary)
                                     Spacer()
-                                    AppButton("Favorite") {
+                                    AppButton(isFavorite(item) ? "Favorited" : "Favorite") {
                                         input.onAction(.addToFavorites(item))
                                     }
+                                    .disabled(isFavorite(item))
                                 }
                             }
                         }
@@ -56,6 +61,10 @@ public struct SearchView: View {
             }
             .navigationTitle("Search")
         }
+    }
+
+    private func isFavorite(_ item: Item) -> Bool {
+        favoriteItemIDs.contains(item.id)
     }
 }
 

@@ -40,6 +40,18 @@ final class CatalogInputTests: XCTestCase {
 
         XCTAssertEqual(fetched, expectedItems)
     }
+
+    func testFavoriteItemsAreAccessibleThroughInput() {
+        let favorite = Item(
+            id: UUID(uuidString: "00000000-0000-0000-0000-00000000A003")!,
+            name: "Mug",
+            subtitle: "Ceramic",
+            price: "$19"
+        )
+        let input = CatalogInput(repository: StubCatalogRepository(items: []), favoriteItems: [favorite])
+
+        XCTAssertEqual(input.favoriteItems, [favorite])
+    }
 }
 
 private actor StubCatalogRepository: CatalogRepository {

@@ -47,7 +47,11 @@ struct ContentView: View {
     }
 
     private var catalogFeatureInput: CatalogInput {
-        CatalogInput(repository: baseCatalogInput.repository, analytics: baseCatalogInput.analytics) { action in
+        CatalogInput(
+            repository: baseCatalogInput.repository,
+            analytics: baseCatalogInput.analytics,
+            favoriteItems: favorites
+        ) { action in
             switch action {
             case let .addToFavorites(item):
                 addToFavorites(item)
@@ -66,7 +70,7 @@ struct ContentView: View {
     }
 
     private var searchFeatureInput: SearchInput {
-        SearchInput(items: baseSearchInput.items) { action in
+        SearchInput(items: baseSearchInput.items, favoriteItems: favorites) { action in
             switch action {
             case let .addToFavorites(item):
                 addToFavorites(item)

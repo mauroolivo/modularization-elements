@@ -16,10 +16,10 @@ enum AppComposition {
     }
 
     static func favoritesInput() -> FavoritesInput {
-        FavoritesInput.default
+        FavoritesInput(items: [])
     }
 
     static func searchInput() -> SearchInput {
-        SearchInput.default
+        SearchInput(items: LiveCatalogRepository.seedItems)
     }
 }

@@ -15,6 +15,7 @@ public struct CatalogView: View {
     @State private var selectedItem: Item?
     private let repository: CatalogRepository
     private let analytics: any AnalyticsTracking
+    private let favoriteItemIDs: Set<UUID>
     private let onAction: (CatalogAction) -> Void
 
     /// Public initializer accepts explicit CatalogInput
@@ -23,6 +24,7 @@ public struct CatalogView: View {
             initialState: .idle,
             repository: input.repository,
             analytics: input.analytics,
+            favoriteItemIDs: Set(input.favoriteItems.map(\.id)),
             onAction: input.onAction
         )
     }
@@ -32,11 +34,13 @@ public struct CatalogView: View {
         initialState: CatalogState,
         repository: CatalogRepository = MockCatalogRepository(),
         analytics: any AnalyticsTracking = NoopAnalyticsTracker(),
+        favoriteItemIDs: Set<UUID> = [],
         onAction: @escaping (CatalogAction) -> Void = { _ in }
     ) {
         _state = State(initialValue: initialState)
         self.repository = repository
         self.analytics = analytics
+        self.favoriteItemIDs = favoriteItemIDs
         self.onAction = onAction
     }
 
@@ -64,9 +68,10 @@ public struct CatalogView: View {
                                     AppButton("Details") {
                                         selectedItem = item
                                     }
-                                    AppButton("Favorite") {
+                                    AppButton(isFavorite(item) ? "Favorited" : "Favorite") {
                                         favoriteSelected(item)
                                     }
+                                    .disabled(isFavorite(item))
                                 }
                             }
                         }
@@ -124,6 +129,10 @@ public struct CatalogView: View {
     private func favoriteSelected(_ item: Item) {
         analytics.track(AnalyticsEvent(name: "catalog_favorite_tapped", properties: ["item_id": item.id.uuidString]))
         onAction(.addToFavorites(item))
+    }
+
+    private func isFavorite(_ item: Item) -> Bool {
+        favoriteItemIDs.contains(item.id)
     }
 }
 

@@ -28,4 +28,11 @@ final class SearchInputTests: XCTestCase {
 
         XCTAssertEqual(captured, item)
     }
+
+    func testInputStoresFavoriteItems() {
+        let favorite = Item(id: UUID(uuidString: "00000000-0000-0000-0000-00000000D003")!, name: "Bottle", subtitle: "Insulated", price: "$29")
+        let input = SearchInput(items: [], favoriteItems: [favorite])
+
+        XCTAssertEqual(input.favoriteItems, [favorite])
+    }
 }

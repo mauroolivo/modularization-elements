@@ -12,15 +12,18 @@ public enum CatalogAction {
 public struct CatalogInput {
     public let repository: CatalogRepository
     public let analytics: any AnalyticsTracking
+    public let favoriteItems: [Item]
     public let onAction: (CatalogAction) -> Void
     
     public init(
         repository: CatalogRepository,
         analytics: any AnalyticsTracking = NoopAnalyticsTracker(),
+        favoriteItems: [Item] = [],
         onAction: @escaping (CatalogAction) -> Void = { _ in }
     ) {
         self.repository = repository
         self.analytics = analytics
+        self.favoriteItems = favoriteItems
         self.onAction = onAction
     }
     

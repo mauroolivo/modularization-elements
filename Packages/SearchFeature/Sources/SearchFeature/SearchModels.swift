@@ -7,13 +7,16 @@ public enum SearchAction {
 
 public struct SearchInput {
     public let items: [Item]
+    public let favoriteItems: [Item]
     public let onAction: (SearchAction) -> Void
 
     public init(
         items: [Item],
+        favoriteItems: [Item] = [],
         onAction: @escaping (SearchAction) -> Void = { _ in }
     ) {
         self.items = items
+        self.favoriteItems = favoriteItems
         self.onAction = onAction
     }
 
